@@ -29,4 +29,8 @@ class Client:
 if __name__ == "__main__":
     c = Client()
     #c.set_range(range(1,10), Lang.cpp)
-    c.show_rated_table(TaskInfo(8, Lang.cpp))
+    #c.show_rated_table(TaskInfo(8, Lang.cpp))
+    l = [7,145,146,938]
+    database._update_ac_sub_cache(l)
+    for i in l:
+        print(i, database.get_accepted_submissions(i))

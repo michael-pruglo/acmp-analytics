@@ -5,3 +5,4 @@ from typing import NamedTuple
 class TaskInfo(NamedTuple):
     id: int
     lang: Lang
+    accepted_submissions: int = 0

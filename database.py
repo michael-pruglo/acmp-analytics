@@ -1,47 +1,35 @@
-from globals import Lang
+import network
 
-cache = {}
+leaderboards_cache = {}
+ac_sub_cache = {}
 
-def get_table(task_info):
-    if task_info in cache:
-        return cache[task_info]
-    else:
-        table = _download_table(task_info)
-        cache[task_info] = table
-        return table
+def prepare_cache(task_info_list):
+    _update_leaderboards_cache(task_info_list)
+    _update_ac_sub_cache([t.id for t in task_info_list])
+
+def get_task_leaderboard(task_info):
+    if task_info not in leaderboards_cache:
+        leaderboards_cache[task_info] = network.get_task_leaderboard(task_info)
+
+    return leaderboards_cache[task_info]
+
+def get_accepted_submissions(task_no):
+    if task_no not in ac_sub_cache:
+        _update_ac_sub_cache([task_no])
+
+    return ac_sub_cache[task_no]
 
 
+def _update_leaderboards_cache(task_info_list):
+    for task_info in task_info_list:
+        get_task_leaderboard(task_info)
 
-def _download_table(task_info):
-    def form_url():
-        url = "https://acmp.ru/index.asp?main=bstatus"
-        url += "&id_t=" + str(task_info.id)
-        lang_dict = {
-            Lang.all: "",
-            Lang.cpp: "CPP",
-            Lang.python: "PY",
-            Lang.pascal: "PAS",
-            Lang.java: "JAVA",
-            Lang.csharp: "CS",
-            Lang.basic: "BAS",
-            Lang.go: "GO",
-        }
-        url += "&lang=" + lang_dict[task_info.lang]
-        return url
-
-    def download():
-        import requests
-        import pandas as pd
-
-        html = requests.get(form_url()).content
-        df_list = pd.read_html(html, attrs={'class':'main'}, parse_dates=True)
-        assert(len(df_list)==1)
-        
-        return df_list[0]
-    
-    def preprocess(table):
-        column_names = ["rank", "date", "name", "lang", "runtime", "memory", "code len"]
-        table.columns = column_names
-        return table
-    
-    return preprocess(download())
+def _update_ac_sub_cache(id_list):
+    TASKS_PER_PAGE = 50
+    def get_page(id):
+        return (id-1)//TASKS_PER_PAGE
+    pages = { get_page(id) for id in id_list }
+    table = network.get_accepted_submissions(pages)
+    table = table[table["id"].isin(id_list)]
+    assert(len(table.index)==len(id_list))
+    ac_sub_cache.update(zip(table["id"], table["acc_no"]))
