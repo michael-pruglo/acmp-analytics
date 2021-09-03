@@ -1,6 +1,7 @@
 from globals import Lang
 import requests
 import pandas as pd
+from time import perf_counter
 
 def get_task_leaderboard(task_info):
     def form_url():
@@ -33,18 +34,15 @@ def _download_table(url, column_names):
         html = requests.get(url).content
         df_list = pd.read_html(html, attrs={'class':'main'}, parse_dates=True)
         assert(len(df_list)==1)
-        
         return df_list[0]
     
     def preprocess(table):
         table.columns = column_names
         return table
     
-    return preprocess(download())
+    start_time = perf_counter()
+    print("network operation... ", end="")
+    ret = preprocess(download())
+    print(f"download took {(perf_counter() - start_time):.3f}s")
 
-
-
-
-    
-
-
+    return ret

@@ -15,6 +15,8 @@ class RatingSystem:
     def get_rated_table(self, table):
         return self._award_points(table)
 
+
+
     def _award_points(self, table):
         table["points"] = 21-table["rank"]
         return table

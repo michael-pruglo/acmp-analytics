@@ -20,6 +20,7 @@ def get_accepted_submissions(task_no):
     return ac_sub_cache[task_no]
 
 
+
 def _update_leaderboards_cache(task_info_list):
     for task_info in task_info_list:
         get_task_leaderboard(task_info)
