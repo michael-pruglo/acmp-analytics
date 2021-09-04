@@ -17,7 +17,7 @@ def get_task_leaderboard(task_info):
         }
         return f"https://acmp.ru/index.asp?main=bstatus&id_t={ task_info.id }&lang={ lang_dict[task_info.lang] }"
 
-    column_names = ["rank", "date", "name", "lang", "runtime", "memory", "code len"]
+    column_names = ["rank", "date", "name", "lang", "runtime", "memory", "code_len"]
     return _download_table(form_url(), column_names)
 
 def get_accepted_submissions(pages):
