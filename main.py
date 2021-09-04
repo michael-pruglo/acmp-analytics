@@ -23,7 +23,7 @@ if __name__ == "__main__":
     c = Client()
     #c.set_range(range(1,10), Lang.cpp)
     #c.show_rated_table(TaskInfo(8, Lang.cpp))
-    c.rate([950], Lang.cpp)
+    c.rate([14,45,72], Lang.cpp)
     print("Rankings after:")
     #print(c.show_rankings())
     
