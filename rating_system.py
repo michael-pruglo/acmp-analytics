@@ -29,12 +29,18 @@ class RatingSystem:
     
     def show_rankings(self):
         sorted_ranking = sorted(self.rankings.items(), key=lambda x: x[1].tmx_points, reverse=True)
-        row_format = "{0:>4}  {1:<40} {2:>10} {3:>11}"
+        row_format = "{0:>4}  {1:<40} {2:>10} {3:>11} {4:>9}"
 
         print("Rankings: ")
-        print(row_format.format("rank", "name", "tmx_points", "rated_tasks"))
+        print(row_format.format("rank", "name", "tmx_points", "rated_tasks", "avg_rank"))
         for i, (name, rating_info) in enumerate(sorted_ranking):
-            print(row_format.format(i+1, name, f"{rating_info.tmx_points:.3f}", len(rating_info.rated_tasks)))
+            print(row_format.format(
+                i+1,
+                name, 
+                f"{rating_info.tmx_points:.3f}", 
+                len(rating_info.rated_tasks), 
+                f"{rating_info.avg_rank:.3f}"
+            ))
 
 
     def _get_task_difficulty(self, info, code_len_column):
@@ -71,9 +77,11 @@ class RatingSystem:
         return max_score*(1 - K*np.log(x))
 
     def _update_rankings_tmx(self, task_id, data):
-        for name, tmx_points in data:
+        for i, (name, tmx_points) in enumerate(data):
             rating_info = RatingInfo() if name not in self.rankings else self.rankings[name]
             rating_info.tmx_points += tmx_points
+            n = len(rating_info.rated_tasks)
+            rating_info.avg_rank = (rating_info.avg_rank*n + i+1)/(n+1)
             rating_info.rated_tasks.append(task_id)
             self.rankings[name] = rating_info
 
