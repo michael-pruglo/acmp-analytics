@@ -25,7 +25,7 @@ class RatingSystem:
             leaderboard["tmx_rating"] = [self.rankings[name].tmx_points for name in leaderboard["name"]]
             print(leaderboard)
             hlp.plot(scores, partial(self._distrib_f, dif))
-            #plt.show()
+            plt.show()
     
     def show_rankings(self):
         sorted_ranking = sorted(self.rankings.items(), key=lambda x: x[1].tmx_points, reverse=True)
@@ -64,9 +64,25 @@ class RatingSystem:
         return acc_sub_coef * code_len_coef
 
     def _get_scores(self, code_len_column):
+        code_len_column = self._deal_with_ties(list(code_len_column))
         interp_scores = [hlp.interpolate(x, min(code_len_column), max(code_len_column), *SCORE_RANGE) for x in code_len_column]
-        #TODO: deal with ties
         return interp_scores
+    
+    def _deal_with_ties(self, scores):
+        i = 0
+        sum_before = sum(scores)
+        while i < len(scores)-1:
+            j = i
+            while j+1 < len(scores) and scores[j] == scores[j+1]:
+                j += 1
+            if j > i:
+                K = 30 #percent - defines spread
+                for k, delta in zip(range(i, j+1), np.linspace(-K/200, K/200, num=j-i+1)):
+                    scores[k] += delta
+            i = j+1
+        
+        assert(sum(scores) == sum_before)
+        return scores
 
     def _rate_task(self, max_pts, scores):
         tmx_points = [self._distrib_f(max_pts, x) for x in scores]
