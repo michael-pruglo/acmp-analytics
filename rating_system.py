@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import helpers as hlp
 from functools import partial
+from math import isclose
 from globals import RatingInfo
 
 ACC_SUB_COEF_RANGE = (3.00, 10.00)
@@ -81,7 +82,7 @@ class RatingSystem:
                     scores[k] += delta
             i = j+1
         
-        assert(sum(scores) == sum_before)
+        assert(isclose(sum(scores), sum_before))
         return scores
 
     def _rate_task(self, max_pts, scores):
