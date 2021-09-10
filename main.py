@@ -15,7 +15,7 @@ class Client:
         self.rating_system.rate(data_map)
 
     def show_rankings(self):
-        print(self.rating_system.get_ratings())
+        self.rating_system.show_rankings()
 
 
 
@@ -24,6 +24,5 @@ if __name__ == "__main__":
     #c.set_range(range(1,10), Lang.cpp)
     #c.show_rated_table(TaskInfo(8, Lang.cpp))
     c.rate([14,45,72], Lang.cpp)
-    print("Rankings after:")
-    #print(c.show_rankings())
-    
+    print(c.show_rankings())
+
