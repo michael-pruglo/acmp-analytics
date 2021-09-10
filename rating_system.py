@@ -77,8 +77,8 @@ class RatingSystem:
             while j+1 < len(scores) and scores[j] == scores[j+1]:
                 j += 1
             if j > i:
-                K = 30 #percent - defines spread
-                for k, delta in zip(range(i, j+1), np.linspace(-K/200, K/200, num=j-i+1)):
+                PERCENT_SPREAD = 30 #percent - defines spread
+                for k, delta in zip(range(i, j+1), np.linspace(-PERCENT_SPREAD/200, PERCENT_SPREAD/200, num=j-i+1)):
                     scores[k] += delta
             i = j+1
         
