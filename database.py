@@ -2,7 +2,7 @@ import network
 import pandas as pd
 import pickle, atexit
 
-_leaderboards_cache = pd.HDFStore("dbcache/leaderboards_cache.h5")
+_leaderboards_cache = pd.HDFStore("dbcache/leaderboards_cache.h5", complevel=7, complib='lzo')
 _ac_sub_cache = {}
 
 def prepare_cache(task_info_list):
