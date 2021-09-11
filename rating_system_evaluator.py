@@ -1,4 +1,5 @@
 import random, statistics
+from rating_system import RatingSystem
 from globals import *
 import database
 import helpers as hlp
@@ -20,13 +21,16 @@ def evaluate(rs_class):
     RUNS = 1
     ratings: dict[str, RatingHistory] = {}
     training_data, eval_data = _prepare_data()
+    accuracy = 0.0
     for i in range(1, RUNS+1):
         random.shuffle(training_data)
         #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
-        run_ratings = rs_class().rate(training_data)
+        rat_sys = rs_class()
+        run_ratings = rat_sys.rate(training_data)
+        accuracy += rat_sys.eval_accuracy(eval_data) / RUNS
         for name, rating in run_ratings.items():
             ratings.setdefault(name, RatingHistory()).add_rating(rating)
-    _print_results(rs_class.__name__, ratings, _calc_accuracy(ratings, eval_data), _calc_variance(ratings))
+    _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings))
 
 
 
@@ -42,11 +46,6 @@ def _prepare_data():
         data.append((task_info, leaderboard))
     return data[:TRAINING_TASKS], data[TRAINING_TASKS:]
 
-def _calc_accuracy(ratings, eval_data):
-    for _, leaderboard in eval_data:
-        return 0.0
-    return 0.0
-
 def _calc_variance(ratings):
     return statistics.mean([rh.variance for rh in ratings.values()])
         
@@ -55,5 +54,6 @@ def _print_results(rs_name, ratings, accuracy, variance):
     print(f"rating system: {rs_name}")
     print(f"accuracy:      {accuracy:.3f}")
     print(f"variance:      {variance:.3f}")
+    print()
     for name, hist in sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True):
         print(f"{name:<32} {hist.mean:>12.3f} {hist.variance:>10.2f}    ", hlp.pretty(hist.history, 2))

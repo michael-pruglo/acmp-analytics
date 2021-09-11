@@ -5,9 +5,12 @@ import helpers as hlp
 from functools import partial
 from math import isclose
 from globals import RatingInfo
+import statistics
 
 
 pd.options.display.float_format = "{:.2f}".format
+SCORE_RANGE = (1.00, 10.00)
+
 
 class RatingSystem:
     def __init__(self):
@@ -17,8 +20,14 @@ class RatingSystem:
         for task_info, leaderboard in data_list:
             self._rate_task(task_info, leaderboard)
         return self.rankings
+    
+    def eval_accuracy(self, data_list) -> float:
+        return statistics.mean([self._eval_accuracy_task(task_info, leaderboard) for task_info, leaderboard in data_list])
 
     def _rate_task(self, task_info, leaderboard) -> None:
+        pass
+
+    def _eval_accuracy_task(self, task_info, leaderboard) -> float:
         pass
 
 
@@ -28,7 +37,7 @@ class TMX_max(RatingSystem):
         RatingSystem.__init__(self)
         self.distrib_f_k = 1/3
 
-    def _rate_task(self, task_info, leaderboard):
+    def _rate_task(self, task_info, leaderboard) -> None:
         lengths = leaderboard["code_len"]
         dif = _get_task_difficulty(task_info, lengths)
         scores = _get_scores(lengths)
@@ -43,6 +52,20 @@ class TMX_max(RatingSystem):
         for name, pts in zip(leaderboard["name"], tmx_points):
             self.rankings.setdefault(name, 0.0)
             self.rankings[name] += pts
+    
+    def _eval_accuracy_task(self, _, leaderboard) -> float:
+        lengths = leaderboard["code_len"]
+        scores = _get_scores(lengths)
+        overall_ratings = [self.rankings.get(name, 0.0) for name in leaderboard["name"]]
+        interp_ratings = [hlp.interpolate_inverse(x, min(overall_ratings), max(overall_ratings), *SCORE_RANGE) for x in overall_ratings]
+        norm = np.linalg.norm(np.array(scores)-np.array(interp_ratings))
+        
+        leaderboard["scores"] = scores
+        leaderboard["ov_rating"] = overall_ratings
+        leaderboard["exp_scores"] = interp_ratings
+        print(leaderboard)
+        print("norm: ", norm)
+        return norm
 
     def _assign_points(self, max_pts, scores):
         return [self._distrib_f(max_pts, x) for x in scores]
@@ -85,7 +108,6 @@ def _get_task_difficulty(info, code_len_column):
 
 def _get_scores(code_len_column):
     code_len_column = _deal_with_ties(list(code_len_column))
-    SCORE_RANGE = (1.00, 10.00)
     interp_scores = [hlp.interpolate(x, min(code_len_column), max(code_len_column), *SCORE_RANGE) for x in code_len_column]
     return interp_scores
 

@@ -9,6 +9,11 @@ def interpolate(x, min_orig, max_orig, min_target, max_target):
         return (max_target+min_target)/2
     return (x-min_orig)/(max_orig-min_orig)*(max_target-min_target) + min_target
 
+def interpolate_inverse(x, min_orig, max_orig, min_target, max_target):
+    if min_orig==max_orig:
+        return (max_target+min_target)/2
+    return max_target - (x-min_orig)/(max_orig-min_orig)*(max_target-min_target)
+
 def plot(x_list, f):
     x_axis = np.linspace(min(x_list)*.9, max(x_list)*1.1)
     plt.plot(x_list, [f(x) for x in x_list], 'ro',
