@@ -1,6 +1,7 @@
 import random, statistics
 from globals import *
 import database
+import helpers as hlp
 
 @dataclass
 class RatingHistory:
@@ -16,12 +17,12 @@ class RatingHistory:
 
 
 def evaluate(rs_class):
-    RUNS = 5
+    RUNS = 1
     ratings: dict[str, RatingHistory] = {}
     training_data, eval_data = _prepare_data()
     for i in range(1, RUNS+1):
         random.shuffle(training_data)
-        print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
+        #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
         run_ratings = rs_class().rate(training_data)
         for name, rating in run_ratings.items():
             ratings.setdefault(name, RatingHistory()).add_rating(rating)
@@ -55,4 +56,4 @@ def _print_results(rs_name, ratings, accuracy, variance):
     print(f"accuracy:      {accuracy:.3f}")
     print(f"variance:      {variance:.3f}")
     for name, hist in sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True):
-        print(f"{name:<32} {hist.mean:>12.3f} {hist.variance:>10.2f}    ", str([f"{i:>8.2f}" for i in hist.history]).replace("'", ""))
+        print(f"{name:<32} {hist.mean:>12.3f} {hist.variance:>10.2f}    ", hlp.pretty(hist.history, 2))

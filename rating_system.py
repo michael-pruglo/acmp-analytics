@@ -7,6 +7,8 @@ from math import isclose
 from globals import RatingInfo
 
 
+pd.options.display.float_format = "{:.2f}".format
+
 class RatingSystem:
     def __init__(self):
         self.rankings = {}
@@ -31,6 +33,13 @@ class TMX_max(RatingSystem):
         dif = _get_task_difficulty(task_info, lengths)
         scores = _get_scores(lengths)
         tmx_points = self._assign_points(dif, scores)
+        
+        #leaderboard["scores"] = scores
+        #leaderboard["tmx_points"] = tmx_points
+        #print(leaderboard)
+        #hlp.plot(scores, partial(self._distrib_f, dif))
+        #plt.show()
+            
         for name, pts in zip(leaderboard["name"], tmx_points):
             self.rankings.setdefault(name, 0.0)
             self.rankings[name] += pts
@@ -88,7 +97,7 @@ def _deal_with_ties(scores):
         while j+1 < len(scores) and scores[j] == scores[j+1]:
             j += 1
         if j > i:
-            PERCENT_SPREAD = 30
+            PERCENT_SPREAD = 20
             for k, delta in zip(range(i, j+1), np.linspace(-PERCENT_SPREAD/200, PERCENT_SPREAD/200, num=j-i+1)):
                 scores[k] += delta
         i = j+1
@@ -99,13 +108,6 @@ def _deal_with_ties(scores):
 
 
 """
-            pd.options.display.float_format = "{:.2f}".format
-            print("interp_len:", hlp.pretty(scores))
-            leaderboard["tmx_rating"] = [self.rankings[name].tmx_points for name in leaderboard["name"]]
-            print(leaderboard)
-            hlp.plot(scores, partial(self._distrib_f, dif))
-            #plt.show()
-    
     def show_rankings(self):
         sorted_ranking = sorted(self.rankings.items(), key=lambda x: x[1].tmx_points, reverse=True)
         row_format = "{0:>4}  {1:<40} {2:>10} {3:>11} {4:>9}"
