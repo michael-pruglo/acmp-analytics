@@ -32,8 +32,13 @@ class Client:
 
 
 
+from rating_system_evaluator import evaluate
+from rating_system import TMX_max
+
 if __name__ == "__main__":
     c = Client()
     #c.fetch_all(Lang.cpp)
-    c.rate([14,45,72,1000], Lang.cpp)
+    #c.rate([14,45,72,1000], Lang.cpp)
     #c.show_rankings()
+
+    evaluate(TMX_max)
