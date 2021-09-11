@@ -14,6 +14,16 @@ class Client:
             data_map[info] = database.get_task_leaderboard(info)
         self.rating_system.rate(data_map)
 
+    def show_difficulty(self, task_list, lang):
+        database.prepare_cache([TaskInfo(id, lang) for id in task_list])
+        diff_map = {}
+        for id in task_list:
+            info = TaskInfo(id, lang, database.get_accepted_submissions(id))
+            table = database.get_task_leaderboard(info)
+            diff_map[id] = self.rating_system._get_task_difficulty(info, table["code_len"])
+        for k,v in sorted(diff_map.items(), key=lambda p:p[1], reverse=True):
+            print(k,v)
+
     def show_rankings(self):
         self.rating_system.show_rankings()
 
