@@ -1,13 +1,28 @@
 import network
 import pandas as pd
-import pickle, atexit
+import pickle, atexit, os
 
-_leaderboards_cache = pd.HDFStore("dbcache/leaderboards_cache.h5", complevel=7, complib='lzo')
+_LEADERBOARD_CACHE_FILENAME = "dbcache/leaderboards_cache.h5"
+_AC_SUB_CACHE_FILENAME = "dbcache/ac_sub_cache.p"
+def _init_leaderboards_cache():
+    return pd.HDFStore(_LEADERBOARD_CACHE_FILENAME, complevel=7, complib='lzo')
+
+_leaderboards_cache = _init_leaderboards_cache()
 _ac_sub_cache = {}
+
+
 
 def prepare_cache(task_info_list):
     _update_leaderboards_cache(task_info_list)
     _update_ac_sub_cache([t.id for t in task_info_list])
+
+def fetch(task_info_list):
+    global _leaderboards_cache
+    _leaderboards_cache.close()
+    os.remove(_LEADERBOARD_CACHE_FILENAME)
+    _leaderboards_cache = _init_leaderboards_cache()
+    _ac_sub_cache.clear()
+    prepare_cache(task_info_list)
 
 def get_task_leaderboard(task_info):
     key = str(task_info)
@@ -21,7 +36,6 @@ def get_accepted_submissions(task_no):
         _update_ac_sub_cache([task_no])
 
     return _ac_sub_cache[task_no]
-
 
 
 def _update_leaderboards_cache(task_info_list):
@@ -44,14 +58,14 @@ def _update_ac_sub_cache(id_list):
 def _close_database():
     print("__closing database")
     _leaderboards_cache.close()
-    with open("dbcache/ac_sub_cache.p", 'wb') as f:
+    with open(_AC_SUB_CACHE_FILENAME, 'wb') as f:
         pickle.dump(_ac_sub_cache, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 
 
 try:
-    with open("dbcache/ac_sub_cache.p", 'rb') as f:
+    with open(_AC_SUB_CACHE_FILENAME, 'rb') as f:
         _ac_sub_cache = pickle.load(f)
 except FileNotFoundError:
     _ac_sub_cache = {}
