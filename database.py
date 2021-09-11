@@ -56,7 +56,6 @@ def _update_ac_sub_cache(id_list):
     _ac_sub_cache.update(zip(table["id"], table["acc_no"]))
 
 def _close_database():
-    print("__closing database")
     _leaderboards_cache.close()
     with open(_AC_SUB_CACHE_FILENAME, 'wb') as f:
         pickle.dump(_ac_sub_cache, f, protocol=pickle.HIGHEST_PROTOCOL)

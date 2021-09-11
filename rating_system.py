@@ -26,7 +26,7 @@ class RatingSystem:
             leaderboard["tmx_rating"] = [self.rankings[name].tmx_points for name in leaderboard["name"]]
             print(leaderboard)
             hlp.plot(scores, partial(self._distrib_f, dif))
-            plt.show()
+            #plt.show()
     
     def show_rankings(self):
         sorted_ranking = sorted(self.rankings.items(), key=lambda x: x[1].tmx_points, reverse=True)

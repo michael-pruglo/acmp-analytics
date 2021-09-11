@@ -6,6 +6,9 @@ class Client:
     def __init__(self):
         self.rating_system = RatingSystem()
 
+    def fetch_all(self, lang):
+        database.fetch([TaskInfo(id, lang) for id in range(1, 1001)])
+
     def rate(self, task_list, lang):
         database.prepare_cache([TaskInfo(id, lang) for id in task_list])
         data_map = {}
@@ -31,8 +34,6 @@ class Client:
 
 if __name__ == "__main__":
     c = Client()
-    #c.set_range(range(1,10), Lang.cpp)
-    #c.show_rated_table(TaskInfo(8, Lang.cpp))
-    c.rate([14,45,72], Lang.cpp)
-    c.show_rankings()
-
+    #c.fetch_all(Lang.cpp)
+    c.rate([14,45,72,1000], Lang.cpp)
+    #c.show_rankings()
