@@ -41,7 +41,7 @@ def _download_table(url, column_names):
         return table
     
     start_time = perf_counter()
-    print("network operation... ", end="", flush=True)
+    print(f"network operation... {url.split('?')[1]:>40}    ", end="", flush=True)
     ret = preprocess(download())
     print(f"download took {(perf_counter() - start_time):.3f}s")
 
