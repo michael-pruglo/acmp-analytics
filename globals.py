@@ -7,14 +7,8 @@ class TaskInfo(NamedTuple):
     lang: Lang
     accepted_submissions: int = 0
     
-    def __hash__(self):
-        return hash((self.id, self.lang))
-
-    def __eq__(self, other):
-        return (self.id, self.lang) == (other.id, other.lang)
-
-    def __ne__(self, other):
-        return not(self == other)
+    def __repr__(self):
+        return f"{self.lang.name}{self.id}"
 
 
 from dataclasses import dataclass, field

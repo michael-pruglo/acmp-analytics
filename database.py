@@ -1,6 +1,7 @@
 import network
+import pandas as pd
 
-leaderboards_cache = {}
+leaderboards_cache = pd.HDFStore("dbcache/leaderboards_cache.h5")
 ac_sub_cache = {}
 
 def prepare_cache(task_info_list):
@@ -8,10 +9,11 @@ def prepare_cache(task_info_list):
     _update_ac_sub_cache([t.id for t in task_info_list])
 
 def get_task_leaderboard(task_info):
-    if task_info not in leaderboards_cache:
-        leaderboards_cache[task_info] = network.get_task_leaderboard(task_info)
+    key = str(task_info)
+    if key not in leaderboards_cache:
+        leaderboards_cache[key] = network.get_task_leaderboard(task_info)
 
-    return leaderboards_cache[task_info]
+    return leaderboards_cache[key]
 
 def get_accepted_submissions(task_no):
     if task_no not in ac_sub_cache:
