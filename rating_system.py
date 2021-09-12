@@ -27,11 +27,9 @@ class RatingSystem:
         pass
 
 
-#task diff determines points for the 1st place
-class TMX_max(RatingSystem):
+class TMX(RatingSystem):
     def __init__(self):
         RatingSystem.__init__(self)
-        self.distrib_f_k = 1/3
 
     def _rate_task(self, task_info, leaderboard) -> None:
         lengths = leaderboard["code_len"]
@@ -63,6 +61,16 @@ class TMX_max(RatingSystem):
         print("norm: ", norm)
         return norm
 
+    def _assign_points(self, difficulty, scores):
+        pass
+
+
+#task diff determines points for the 1st place
+class TMX_max(TMX):
+    def __init__(self):
+        TMX.__init__(self)
+        self.distrib_f_k = 1/3
+
     def _assign_points(self, max_pts, scores):
         return [self._distrib_f(max_pts, x) for x in scores]
 
@@ -70,12 +78,18 @@ class TMX_max(RatingSystem):
         return max_score*(1 - self.distrib_f_k*np.log(x))
 
 #task diff determines prize pool for all 20
-class TMX_const(RatingSystem):
-    pass
+class TMX_const(TMX):
+    def __init__(self):
+        TMX.__init__(self)
+
+    def _assign_points(self, prize_pool, scores):
+        pass
 
 #task diff considers player ratings
-class TMX_reflexive(RatingSystem):
-    pass
+class TMX_reflexive(TMX):
+    def __init__(self):
+        TMX.__init__(self)
+
 
 class ELO(RatingSystem):
     pass
