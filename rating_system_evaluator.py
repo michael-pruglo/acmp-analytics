@@ -21,8 +21,8 @@ def evaluate(rs_classes):
     colors = ["C"+str(i) for i in range(1, len(rs_classes)+1)]
 
     for rsc, color in zip(rs_classes, colors):
-        _eval_class(rsc, 300, True, 10, color)
-        _eval_class(rsc, 300, False, 2, color)
+        _eval_class(rsc, 1000, True, 1, color)
+        _eval_class(rsc, 1000, False, 20, color)
 
     plt.legend()
     plt.show()
@@ -31,13 +31,14 @@ def evaluate(rs_classes):
     
 def _eval_class(rs_class, task_no, persistent=True, runs=1, graphing_color="#3ded97"):
     ratings: dict[str, RatingHistory] = {}
-    training_data, eval_data = _prepare_data(task_no)
+    data =_load_data(task_no)
+    training_data, eval_data = _split_data(data)
     accuracy = 0.0
     for i in range(runs):
         if persistent:
             random.shuffle(training_data)
         else:
-            training_data, eval_data = _prepare_data(task_no)
+            training_data, eval_data = _split_data(data)
         #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
         rat_sys = rs_class()
         run_ratings = rat_sys.rate(training_data)
@@ -46,15 +47,18 @@ def _eval_class(rs_class, task_no, persistent=True, runs=1, graphing_color="#3de
             ratings.setdefault(name, RatingHistory()).add_rating(rating)
     _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings), persistent, graphing_color)
 
-def _prepare_data(task_no):
-    TRAINING_TASKS = task_no*9//10
+def _load_data(task_no=1000):
     data = []
-    ids = random.sample(range(1,1001), task_no)
-    random.shuffle(ids)
+    ids = random.sample(range(1,1001), task_no) if task_no<1000 else list(range(1,1001))
     for id in ids:
         task_info = TaskInfo(id, Lang.cpp, database.get_accepted_submissions(id))
         leaderboard = database.get_task_leaderboard(task_info)
         data.append((task_info, leaderboard))
+    return data
+    
+def _split_data(data):
+    TRAINING_TASKS = len(data)*9//10
+    random.shuffle(data)
     return data[:TRAINING_TASKS], data[TRAINING_TASKS:]
 
 def _calc_variance(ratings):
@@ -69,7 +73,7 @@ def _print_results(rs_name, ratings, accuracy, variance, persistent, graphing_co
         print()
     
     def _print_rankings():
-        for i, (name, hist) in enumerate(sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True)[:30]):
+        for i, (name, hist) in enumerate(sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True)[:5]):
             print(f"{i+1:>3} {name:<32} {hist.mean:>12.3f} {hist.variance:>10.2f}    ", hlp.pretty(hist.history, 2))
     
     def _plot_vertical_lines():

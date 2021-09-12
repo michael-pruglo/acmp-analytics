@@ -59,7 +59,7 @@ class TMX(RatingSystem):
         leaderboard["ov_rating"] = overall_ratings
         leaderboard["exp_scores"] = interp_ratings
         #print(leaderboard)
-        print("norm: ", norm)
+        #print("norm: ", norm)
         return norm
 
     def _assign_points(self, difficulty, scores):
@@ -112,10 +112,10 @@ def _get_task_difficulty(info, code_len_column):
 
     acc_sub_coef = get_acc_sub_coef(info.accepted_submissions)
     code_len_coef = get_code_len_coef(code_len_column)
-    print(f"Task #{info.id} difficulty:")
-    print(f"  acc_sub         = {info.accepted_submissions:7} [x{acc_sub_coef:.2f}]")
-    print(f"  code_len median = {code_len_column.median():7.2f} [x{code_len_coef:.2f}]")
-    print(f"  total = {(acc_sub_coef*code_len_coef):.2f}")
+    #print(f"Task #{info.id} difficulty:")
+    #print(f"  acc_sub         = {info.accepted_submissions:7} [x{acc_sub_coef:.2f}]")
+    #print(f"  code_len median = {code_len_column.median():7.2f} [x{code_len_coef:.2f}]")
+    #print(f"  total = {(acc_sub_coef*code_len_coef):.2f}")
     return acc_sub_coef * code_len_coef
 
 def _get_scores(code_len_column):
