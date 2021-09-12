@@ -22,7 +22,7 @@ def evaluate(rat_systems):
 
     for rs, color in zip(rat_systems, colors):
         _eval_class(rs, 1000, True, 1, color)
-        _eval_class(rs, 1000, False, 30, color)
+        _eval_class(rs, 1000, False, 100, color)
 
     plt.legend()
     plt.show()
@@ -82,7 +82,7 @@ def _print_results(rs_name, ratings, accuracies, persistent, graphing_color):
             if l < 10:
                 bins = l
             elif l >= 100:
-                bins = l/10 
+                bins = l//10 
             plt.hist(accuracies, bins, density=True, color=graphing_color, label=rs_name)
         
 

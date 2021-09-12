@@ -1,4 +1,5 @@
-import numpy as np, statistics
+import numpy as np, statistics, matplotlib.pyplot as plt
+from functools import partial
 from collections import defaultdict
 from math import isclose
 from globals import *
@@ -8,13 +9,12 @@ class DifficultyManager:
     _COMPONENT_RANGE = (0, 10)
     _DIFF_RANGE = (0, 100)
 
-    def __init__(self, AS_C=1, AS_A=9.333, AS_B=0.056, LEN_C=1, LEN_A=0.000391, LEN_B=0.000014, PS_C=0):
+    def __init__(self, AS_C=0.3, AS_A=9.333, AS_B=0.056, LEN_C=1, LEN_A=.2e-6, PS_C=0):
         self.AS_C = AS_C
         self.AS_A = AS_A
         self.AS_B = AS_B
         self.LEN_C = LEN_C
         self.LEN_A = LEN_A
-        self.LEN_B = LEN_B
         self.PS_C = PS_C
 
     def get_task_difficulty(self, task_info:TaskInfo, leaderboard, ranking_range):
@@ -27,6 +27,12 @@ class DifficultyManager:
             ( self.LEN_C,   code_len_score ),
             ( self.PS_C,    player_strength_score ),
         ])
+
+        #print(f"Task #{task_info.id} difficulty:")
+        #print(f"  ac_sub:     {acc_sub_score:.2f}")
+        #print(f"  code_len:   {code_len_score:.2f}")
+        #print(f"  player_str: {player_strength_score:.2f}")
+        #print(f"total: {total:.2f}")
 
         return total
     
@@ -43,8 +49,8 @@ class DifficultyManager:
 
     def _get_code_len_score(self, lengths):
         m = lengths.median()
-        coef = 10 - self.LEN_A * m - self.LEN_B * m * m
-        return max(coef, 1)
+        coef = 10 - self.LEN_A * m * m * m
+        return max(coef, 0)
 
     def _get_player_strength_score(self, rankings, ranking_range):
         mean = statistics.mean(rankings)
@@ -85,7 +91,7 @@ class DeltaManager:
 
 #task diff determines points for the 1st place
 class TMX_max(DeltaManager):
-    def __init__(self, distrib_f_k=1/3):
+    def __init__(self, distrib_f_k=0.29):
         DeltaManager.__init__(self)
         self.distrib_f_k = distrib_f_k
 
@@ -127,6 +133,13 @@ class RatingSystem:
             dr = self.delta_mgr.get_rating_deltas(task_diff, scores)
             for name, delta in zip(leaderboard["name"], dr):
                 self.rankings[name] += delta
+            
+            leaderboard["scores"] = scores
+            leaderboard["deltas"] = dr
+            #print(leaderboard)
+            #hlp.plot(scores, partial(self.delta_mgr._distrib_f, task_diff))
+            #plt.show()
+
 
         return self.rankings
     
