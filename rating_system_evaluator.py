@@ -20,34 +20,36 @@ def evaluate(rs_classes):
         pickle.load(f)
     colors = ["C"+str(i) for i in range(1, len(rs_classes)+1)]
 
-    for data in zip(rs_classes, colors):
-        _eval_class(*data)
+    for rsc, color in zip(rs_classes, colors):
+        _eval_class(rsc, 300, True, 10, color)
+        _eval_class(rsc, 300, False, 2, color)
 
     plt.legend()
     plt.show()
 
 
     
-def _eval_class(rs_class, graphing_color="#3ded97"):
-    RUNS = 1
+def _eval_class(rs_class, task_no, persistent=True, runs=1, graphing_color="#3ded97"):
     ratings: dict[str, RatingHistory] = {}
-    training_data, eval_data = _prepare_data()
+    training_data, eval_data = _prepare_data(task_no)
     accuracy = 0.0
-    for i in range(1, RUNS+1):
-        random.shuffle(training_data)
+    for i in range(runs):
+        if persistent:
+            random.shuffle(training_data)
+        else:
+            training_data, eval_data = _prepare_data(task_no)
         #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
         rat_sys = rs_class()
         run_ratings = rat_sys.rate(training_data)
-        accuracy += rat_sys.eval_accuracy(eval_data) / RUNS
+        accuracy += rat_sys.eval_accuracy(eval_data) / runs
         for name, rating in run_ratings.items():
             ratings.setdefault(name, RatingHistory()).add_rating(rating)
-    _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings), graphing_color)
+    _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings), persistent, graphing_color)
 
-def _prepare_data():
-    TASK_NO = 200
-    TRAINING_TASKS = TASK_NO*9//10
+def _prepare_data(task_no):
+    TRAINING_TASKS = task_no*9//10
     data = []
-    ids = list(range(1, TASK_NO+1))
+    ids = random.sample(range(1,1001), task_no)
     random.shuffle(ids)
     for id in ids:
         task_info = TaskInfo(id, Lang.cpp, database.get_accepted_submissions(id))
@@ -58,7 +60,7 @@ def _prepare_data():
 def _calc_variance(ratings):
     return statistics.mean([rh.variance for rh in ratings.values()])
         
-def _print_results(rs_name, ratings, accuracy, variance, graphing_color):
+def _print_results(rs_name, ratings, accuracy, variance, persistent, graphing_color):
     def _print_header():
         print("\n\n"+"="*111)
         print(f"rating system: {rs_name}")
@@ -70,9 +72,17 @@ def _print_results(rs_name, ratings, accuracy, variance, graphing_color):
         for i, (name, hist) in enumerate(sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True)[:30]):
             print(f"{i+1:>3} {name:<32} {hist.mean:>12.3f} {hist.variance:>10.2f}    ", hlp.pretty(hist.history, 2))
     
+    def _plot_vertical_lines():
+        linestl = "solid"
+        lbl = rs_name
+        if persistent:
+            linestl = "-."
+            lbl = rs_name + " persistent"
+        plt.axvline(accuracy, color=graphing_color, linestyle=linestl, label=lbl)
+
     _print_header()
     _print_rankings()
-    plt.axvline(accuracy, color=graphing_color, label=rs_name)
+    _plot_vertical_lines()
 
 
 _ACCURACY_DIST_GRAPH_FILENAME = "dbcache/accuracy_dist.p"
