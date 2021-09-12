@@ -1,6 +1,8 @@
 from enum import Enum
 Lang = Enum("Lang", "all cpp python pascal java csharp basic go")
 
+SCORE_RANGE = (1.00, 20.00)
+
 from typing import NamedTuple
 class TaskInfo(NamedTuple):
     id: int

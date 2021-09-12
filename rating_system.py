@@ -1,15 +1,11 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import helpers as hlp
+import pandas as pd, numpy as np, statistics, matplotlib.pyplot as plt
 from functools import partial
 from math import isclose
-from globals import RatingInfo
-import statistics
+import helpers as hlp
+from globals import *
 
 
 pd.options.display.float_format = "{:.2f}".format
-SCORE_RANGE = (1.00, 10.00)
 
 
 class RatingSystem:
@@ -125,41 +121,4 @@ def _deal_with_ties(scores):
         i = j+1
     
     assert(isclose(sum(scores), sum_before))
-    return scores
-
-
-
-"""
-    def show_rankings(self):
-        sorted_ranking = sorted(self.rankings.items(), key=lambda x: x[1].tmx_points, reverse=True)
-        row_format = "{0:>4}  {1:<40} {2:>10} {3:>11} {4:>9}"
-
-        print("Rankings: ")
-        print(row_format.format("rank", "name", "tmx_points", "rated_tasks", "avg_rank"))
-        for i, (name, rating_info) in enumerate(sorted_ranking):
-            print(row_format.format(
-                i+1,
-                name, 
-                f"{rating_info.tmx_points:.3f}", 
-                len(rating_info.rated_tasks), 
-                f"{rating_info.avg_rank:.3f}"
-            ))
-
-
-
-
-
-
-
-
-
-    def _update_rankings_tmx(self, task_id, data):
-        for i, (name, tmx_points) in enumerate(data):
-            rating_info = RatingInfo() if name not in self.rankings else self.rankings[name]
-            rating_info.tmx_points += tmx_points
-            n = len(rating_info.rated_tasks)
-            rating_info.avg_rank = (rating_info.avg_rank*n + i+1)/(n+1)
-            rating_info.rated_tasks.append(task_id)
-            self.rankings[name] = rating_info
-
-"""      
+    return scores   
