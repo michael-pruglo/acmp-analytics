@@ -1,6 +1,6 @@
 from globals import *
 import rating_system_evaluator
-from rating_system import TMX_max
+from rating_system import *
 import database
 
 def fetch_all(lang):
@@ -12,4 +12,5 @@ def prepare_local_cache():
 
 
 if __name__ == "__main__":
-    rating_system_evaluator.evaluate(TMX_max)
+    #rating_system_evaluator.evaluate(TMX_max)
+    rating_system_evaluator.evaluate(TMX_const)

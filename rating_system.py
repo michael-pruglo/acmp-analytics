@@ -40,6 +40,7 @@ class TMX(RatingSystem):
         #leaderboard["scores"] = scores
         #leaderboard["tmx_points"] = tmx_points
         #print(leaderboard)
+        #plt.plot(scores, tmx_points, 'yo')
         #hlp.plot(scores, partial(self._distrib_f, dif))
         #plt.show()
             
@@ -57,7 +58,7 @@ class TMX(RatingSystem):
         leaderboard["scores"] = scores
         leaderboard["ov_rating"] = overall_ratings
         leaderboard["exp_scores"] = interp_ratings
-        print(leaderboard)
+        #print(leaderboard)
         print("norm: ", norm)
         return norm
 
@@ -78,12 +79,13 @@ class TMX_max(TMX):
         return max_score*(1 - self.distrib_f_k*np.log(x))
 
 #task diff determines prize pool for all 20
-class TMX_const(TMX):
+class TMX_const(TMX_max):
     def __init__(self):
-        TMX.__init__(self)
+        TMX_max.__init__(self)
 
     def _assign_points(self, prize_pool, scores):
-        pass
+        first = super()._assign_points(prize_pool, scores)
+        return [x*prize_pool/sum(first) for x in first]
 
 #task diff considers player ratings
 class TMX_reflexive(TMX):
