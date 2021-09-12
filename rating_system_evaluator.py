@@ -15,20 +15,29 @@ class RatingHistory:
             self.variance = statistics.variance(self.history, self.mean)
 
 
-def evaluate(rs_class):
-    RUNS = 1
-    ratings: dict[str, RatingHistory] = {}
-    training_data, eval_data = _prepare_data()
-    accuracy = 0.0
-    for i in range(1, RUNS+1):
-        random.shuffle(training_data)
-        #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
-        rat_sys = rs_class()
-        run_ratings = rat_sys.rate(training_data)
-        accuracy += rat_sys.eval_accuracy(eval_data) / RUNS
-        for name, rating in run_ratings.items():
-            ratings.setdefault(name, RatingHistory()).add_rating(rating)
-    _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings))
+def evaluate(rs_classes):
+    with open(_ACCURACY_DIST_GRAPH_FILENAME, 'rb') as f:
+        pickle.load(f)
+
+    clr = 1
+    for rs_class in rs_classes:
+        RUNS = 1
+        ratings: dict[str, RatingHistory] = {}
+        training_data, eval_data = _prepare_data()
+        accuracy = 0.0
+        for i in range(1, RUNS+1):
+            random.shuffle(training_data)
+            #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
+            rat_sys = rs_class()
+            run_ratings = rat_sys.rate(training_data)
+            accuracy += rat_sys.eval_accuracy(eval_data) / RUNS
+            for name, rating in run_ratings.items():
+                ratings.setdefault(name, RatingHistory()).add_rating(rating)
+        _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings), "C"+str(clr))
+        clr += 1
+
+    plt.legend()
+    plt.show()
 
 
 
@@ -47,7 +56,7 @@ def _prepare_data():
 def _calc_variance(ratings):
     return statistics.mean([rh.variance for rh in ratings.values()])
         
-def _print_results(rs_name, ratings, accuracy, variance):
+def _print_results(rs_name, ratings, accuracy, variance, graphing_color="#3ded97"):
     def _print_header():
         print("\n\n"+"="*111)
         print(f"rating system: {rs_name}")
@@ -59,16 +68,9 @@ def _print_results(rs_name, ratings, accuracy, variance):
         for i, (name, hist) in enumerate(sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True)[:30]):
             print(f"{i+1:>3} {name:<32} {hist.mean:>12.3f} {hist.variance:>10.2f}    ", hlp.pretty(hist.history, 2))
     
-    def _plot():
-        with open(_ACCURACY_DIST_GRAPH_FILENAME, 'rb') as f:
-            pickle.load(f)
-            plt.axvline(accuracy, color='#3ded97', label="curr")
-            plt.legend()
-            plt.show()
-    
     _print_header()
     _print_rankings()
-    _plot()
+    plt.axvline(accuracy, color=graphing_color, label=rs_name)
 
 
 _ACCURACY_DIST_GRAPH_FILENAME = "dbcache/accuracy_dist.p"
@@ -92,12 +94,11 @@ def _cache_accuracy_dist_graph(N = 10000):
     scores = np.linspace(*SCORE_RANGE, SCORES_NO)
     v_opposite = np.linalg.norm(scores-np.flip(scores))
 
-    fig_handle = plt.figure("accuracy distribution")
+    fig_handle = plt.figure("accuracy distribution", figsize=(17,5))
     plt.hist(norms, 300, density=True)
-    plt.axvline(statistics.mean(norms),     color='y', label="mean")
-    plt.axvline(statistics.median(norms),   color='y', label="median")
-    plt.axvline(v_opposite,                 color='r', label="worst")
+    plt.axvline(statistics.mean(norms),     color='y', linestyle="dashed", label="mean")
+    plt.axvline(statistics.median(norms),   color='y', linestyle="dashed", label="median")
+    plt.axvline(v_opposite,                 color='r', linestyle="dashed", label="worst")
     with open(_ACCURACY_DIST_GRAPH_FILENAME, 'wb') as f:
         pickle.dump(fig_handle, f) 
     print("success")
-
