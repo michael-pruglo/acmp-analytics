@@ -62,7 +62,7 @@ def _split_data(data):
     return data[:TRAINING_TASKS], data[TRAINING_TASKS:]
 
 def _print_results(rs_name, ratings, accuracies, persistent, graphing_color):
-    avg_accuracy = statistics.mean(accuracies);
+    avg_accuracy = statistics.mean(accuracies)
     def _print_header():
         print("\n\n"+"="*111)
         print(f"rating system: {rs_name}")
@@ -79,7 +79,13 @@ def _print_results(rs_name, ratings, accuracies, persistent, graphing_color):
             plt.axvline(avg_accuracy, color=graphing_color, linestyle="-.", label=rs_name + " persistent")
         else:
             print("\n\n", hlp.pretty(accuracies))
-            plt.hist(accuracies, min(10, len(accuracies)/10), density=True, color=graphing_color, label=rs_name)
+            bins = 10
+            l = len(accuracies)
+            if l < 10:
+                bins = l
+            elif l >= 100:
+                bins = l/10 
+            plt.hist(accuracies, bins, density=True, color=graphing_color, label=rs_name)
         
 
     _print_header()
