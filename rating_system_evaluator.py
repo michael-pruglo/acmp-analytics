@@ -15,21 +15,21 @@ class RatingHistory:
             self.variance = statistics.variance(self.history, self.mean)
 
 
-def evaluate(rs_classes):
+def evaluate(rat_systems):
     with open(_ACCURACY_DIST_GRAPH_FILENAME, 'rb') as f:
         pickle.load(f)
-    colors = ["C"+str(i) for i in range(1, len(rs_classes)+1)]
+    colors = ["C"+str(i) for i in range(1, len(rat_systems)+1)]
 
-    for rsc, color in zip(rs_classes, colors):
-        _eval_class(rsc, 1000, True, 1, color)
-        _eval_class(rsc, 1000, False, 300, color)
+    for rs, color in zip(rat_systems, colors):
+        _eval_class(rs, 1000, True, 1, color)
+        _eval_class(rs, 1000, False, 30, color)
 
     plt.legend()
     plt.show()
 
 
     
-def _eval_class(rs_class, task_no, persistent=True, runs=1, graphing_color="#3ded97"):
+def _eval_class(rat_sys, task_no, persistent=True, runs=1, graphing_color="#3ded97"):
     ratings: dict[str, RatingHistory] = {}
     data =_load_data(task_no)
     training_data, eval_data = _split_data(data)
@@ -39,13 +39,11 @@ def _eval_class(rs_class, task_no, persistent=True, runs=1, graphing_color="#3de
             random.shuffle(training_data)
         else:
             training_data, eval_data = _split_data(data)
-        #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
-        rat_sys = rs_class()
         run_ratings = rat_sys.rate(training_data)
         accuracies.append(rat_sys.eval_accuracy(eval_data))
         for name, rating in run_ratings.items():
             ratings.setdefault(name, RatingHistory()).add_rating(rating)
-    _print_results(rs_class.__name__, ratings, accuracies, persistent, graphing_color)
+    _print_results(str(type(rat_sys)), ratings, accuracies, persistent, graphing_color)
 
 def _load_data(task_no=1000):
     data = []

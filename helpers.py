@@ -1,5 +1,5 @@
-import numpy as np
-import matplotlib.pyplot as plt
+import numpy as np, matplotlib.pyplot as plt
+from math import isclose
 
 def pretty(list_of_floats, precision=3):
     return str([f"{s:.{precision}f}" for s in list_of_floats]).replace("'", "")
@@ -18,6 +18,9 @@ def plot(x_list, f):
     x_axis = np.linspace(min(x_list)*.9, max(x_list)*1.1)
     plt.plot(x_list, [f(x) for x in x_list], 'ro',
              x_axis, [f(x) for x in x_axis])
+
+def is_in_range(x, min, max):
+    return min < x < max or isclose(x, min) or isclose(x, max)
 
 if __name__ == "__main__":
     assert(interpolate(71,0,100,0,10)==7.1)
