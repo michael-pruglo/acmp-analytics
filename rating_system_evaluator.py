@@ -18,28 +18,30 @@ class RatingHistory:
 def evaluate(rs_classes):
     with open(_ACCURACY_DIST_GRAPH_FILENAME, 'rb') as f:
         pickle.load(f)
+    colors = ["C"+str(i) for i in range(1, len(rs_classes)+1)]
 
-    clr = 1
-    for rs_class in rs_classes:
-        RUNS = 1
-        ratings: dict[str, RatingHistory] = {}
-        training_data, eval_data = _prepare_data()
-        accuracy = 0.0
-        for i in range(1, RUNS+1):
-            random.shuffle(training_data)
-            #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
-            rat_sys = rs_class()
-            run_ratings = rat_sys.rate(training_data)
-            accuracy += rat_sys.eval_accuracy(eval_data) / RUNS
-            for name, rating in run_ratings.items():
-                ratings.setdefault(name, RatingHistory()).add_rating(rating)
-        _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings), "C"+str(clr))
-        clr += 1
+    for data in zip(rs_classes, colors):
+        _eval_class(*data)
 
     plt.legend()
     plt.show()
 
 
+    
+def _eval_class(rs_class, graphing_color="#3ded97"):
+    RUNS = 1
+    ratings: dict[str, RatingHistory] = {}
+    training_data, eval_data = _prepare_data()
+    accuracy = 0.0
+    for i in range(1, RUNS+1):
+        random.shuffle(training_data)
+        #print("RUN # ", i, "\ntr data:", [t[0].id for t in training_data], "eval_data:", [t[0].id for t in eval_data])
+        rat_sys = rs_class()
+        run_ratings = rat_sys.rate(training_data)
+        accuracy += rat_sys.eval_accuracy(eval_data) / RUNS
+        for name, rating in run_ratings.items():
+            ratings.setdefault(name, RatingHistory()).add_rating(rating)
+    _print_results(rs_class.__name__, ratings, accuracy, _calc_variance(ratings), graphing_color)
 
 def _prepare_data():
     TASK_NO = 200
@@ -56,7 +58,7 @@ def _prepare_data():
 def _calc_variance(ratings):
     return statistics.mean([rh.variance for rh in ratings.values()])
         
-def _print_results(rs_name, ratings, accuracy, variance, graphing_color="#3ded97"):
+def _print_results(rs_name, ratings, accuracy, variance, graphing_color):
     def _print_header():
         print("\n\n"+"="*111)
         print(f"rating system: {rs_name}")
