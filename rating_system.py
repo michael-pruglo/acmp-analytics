@@ -155,11 +155,13 @@ class RatingSystem:
             #hlp.plot(scores, partial(self.delta_mgr._distrib_f, task_diff))
             #plt.show()
 
-
         return self.rankings
     
     def eval_accuracy(self, data_list) -> float:
         return statistics.mean([self._eval_accuracy_task(task_info, leaderboard) for task_info, leaderboard in data_list])
+
+    def reset(self) -> None:
+        self.rankings = defaultdict(self.delta_mgr.default_rating)
 
     def _eval_accuracy_task(self, _, leaderboard) -> float:
         leaderboard["rankings"] = [self.rankings[name] for name in leaderboard["name"]]

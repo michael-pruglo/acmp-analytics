@@ -1,5 +1,6 @@
 import random, statistics, pickle, numpy as np, matplotlib.pyplot as plt
 from globals import *
+from rating_system import RatingSystem
 import database, helpers as hlp
 
 @dataclass
@@ -22,14 +23,14 @@ def evaluate(rat_systems):
 
     for rs, color in zip(rat_systems, colors):
         _eval_class(rs, 1000, True, 1, color)
-        _eval_class(rs, 1000, False, 10, color)
+        _eval_class(rs, 1000, False, 50, color)
 
     plt.legend()
     plt.show()
 
 
-    
-def _eval_class(rat_sys, task_no, persistent=True, runs=1, graphing_color="#3ded97"):
+
+def _eval_class(rat_sys:RatingSystem, task_no, persistent=True, runs=1, graphing_color="#3ded97"):
     ratings: dict[str, RatingHistory] = {}
     data =_load_data(task_no)
     training_data, eval_data = _split_data(data)
@@ -39,6 +40,7 @@ def _eval_class(rat_sys, task_no, persistent=True, runs=1, graphing_color="#3ded
             random.shuffle(training_data)
         else:
             training_data, eval_data = _split_data(data)
+        rat_sys.reset()
         run_ratings = rat_sys.rate(training_data)
         accuracies.append(rat_sys.eval_accuracy(eval_data))
         for name, rating in run_ratings.items():
