@@ -13,7 +13,11 @@ def prepare_local_cache():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
+    old_diff_mgr = DifficultyManager(AS_C=1, LEN_C = 1, combiner=CombinerMult())
     rating_system_evaluator.evaluate([
-        RatingSystem(DifficultyManager(), ScoringManager(), TMX_max()),
-        RatingSystem(DifficultyManager(), ScoringManager(), TMX_const()),
+        RatingSystem(DifficultyManager(), ScoringManager(), TMX_max(),   description="tmx max weighted sum"),
+        RatingSystem(DifficultyManager(), ScoringManager(), TMX_const(), description="tmx const weighted sum"),
+        RatingSystem(old_diff_mgr,        ScoringManager(), TMX_max(),   description="tmx max mult"),
+        RatingSystem(old_diff_mgr,        ScoringManager(), TMX_const(), description="tmx const mult"),
     ])
+    

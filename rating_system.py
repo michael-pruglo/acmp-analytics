@@ -5,24 +5,46 @@ from math import isclose
 from globals import *
 import helpers as hlp
 
+class Combiner:
+    def combine_components(self, comp_list):
+        pass
+class CombinerWeightedSum(Combiner):
+    def combine_components(self, comp_list):
+        total = max_possible = 0.0
+        for coef, val in comp_list:
+            assert(hlp.is_in_range(val, *DifficultyManager._COMPONENT_RANGE))
+            total += coef * val
+            max_possible += coef * DifficultyManager._COMPONENT_RANGE[1]
+        return hlp.interpolate(total, 0.0, max_possible, *DifficultyManager._DIFF_RANGE)
+class CombinerMult(Combiner):
+    def combine_components(self, comp_list):
+        total = max_possible = 1.0
+        for coef, val in comp_list:
+            assert(hlp.is_in_range(val, *DifficultyManager._COMPONENT_RANGE))
+            if coef>0 and val>0:
+                total *= coef * val
+                max_possible *= coef * DifficultyManager._COMPONENT_RANGE[1]
+        return hlp.interpolate(total, 1.0, max_possible, *DifficultyManager._DIFF_RANGE)
+
 class DifficultyManager:
     _COMPONENT_RANGE = (0, 10)
     _DIFF_RANGE = (0, 100)
 
-    def __init__(self, AS_C=0.3, AS_A=9.333, AS_B=0.056, LEN_C=1, LEN_A=.2e-6, PS_C=0):
+    def __init__(self, AS_C=0.3, AS_A=9.333, AS_B=0.056, LEN_C=1, LEN_A=.2e-6, PS_C=0, combiner:Combiner=CombinerWeightedSum()):
         self.AS_C = AS_C
         self.AS_A = AS_A
         self.AS_B = AS_B
         self.LEN_C = LEN_C
         self.LEN_A = LEN_A
         self.PS_C = PS_C
+        self.combiner = combiner
 
     def get_task_difficulty(self, task_info:TaskInfo, leaderboard, ranking_range):
         acc_sub_score = self._get_acc_sub_score(task_info.accepted_submissions)
         code_len_score = self._get_code_len_score(leaderboard["code_len"])
         player_strength_score = self._get_player_strength_score(leaderboard["rankings"], ranking_range) if self.PS_C else 0.0
 
-        total = self._combine_components([
+        total = self.combiner.combine_components([
             ( self.AS_C,    acc_sub_score ),
             ( self.LEN_C,   code_len_score ),
             ( self.PS_C,    player_strength_score ),
@@ -35,14 +57,6 @@ class DifficultyManager:
         #print(f"total: {total:.2f}")
 
         return total
-    
-    def _combine_components(self, comp_list):
-        total = max_possible = 0.0
-        for coef, val in comp_list:
-            assert(hlp.is_in_range(val, *DifficultyManager._COMPONENT_RANGE))
-            total += coef * val
-            max_possible += coef * DifficultyManager._COMPONENT_RANGE[1]
-        return hlp.interpolate(total, 0.0, max_possible, *DifficultyManager._DIFF_RANGE)
 
     def _get_acc_sub_score(self, acc):
         return self.AS_A + self.AS_B * np.log(acc)
@@ -117,11 +131,12 @@ class ELO(DeltaManager):
 
 
 class RatingSystem:
-    def __init__(self, diff_mgr:DifficultyManager, scoring_mgr:ScoringManager, delta_mgr:DeltaManager):
+    def __init__(self, diff_mgr:DifficultyManager, scoring_mgr:ScoringManager, delta_mgr:DeltaManager, description="n/a"):
         self.diff_mgr = diff_mgr
         self.scoring_mgr = scoring_mgr
         self.delta_mgr = delta_mgr
         self.rankings = defaultdict(self.delta_mgr.default_rating)
+        self.description = description
 
     def rate(self, data_list):
         for task_info, leaderboard in data_list:
