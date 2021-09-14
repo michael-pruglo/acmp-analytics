@@ -24,10 +24,19 @@ def show_potentials():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
+    #rating_system_evaluator.evaluate([
+    #    RatingSystem(DifficultyManager(AS_C=0.05, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_const(), description="1"),
+    #    RatingSystem(DifficultyManager(AS_C=0.1, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_const(), description="2"),
+    #    RatingSystem(DifficultyManager(AS_C=0.2, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_const(), description="3"),
+    #    RatingSystem(DifficultyManager(AS_C=0.3, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_const(), description="4"),
+    #    RatingSystem(DifficultyManager(AS_C=0.4, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_const(), description="5"),
+    #    RatingSystem(DifficultyManager(AS_C=0.5, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_const(), description="6"),
+    #],
+    #0, 100)
     rating_system_evaluator.evaluate([
-        RatingSystem(DifficultyManager(AS_C=0.15, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_max(), description="max"),
-        RatingSystem(DifficultyManager(AS_C=0.15, LEN_C=0.7, PS_C=1.0), ScoringManager(), TMX_const(), description="const"),
+       RatingSystem(DifficultyManager(AS_C=0.5, LEN_C=0.7, PS_C=1.0), ScoringManager(), SME(),     description="sme"),
+       RatingSystem(DifficultyManager(AS_C=0.5, LEN_C=0.7, PS_C=1.0), ScoringManager(), SME_EvE(410, 35), description="sme eve"),
     ],
-    0, 20)
+    0, 30, tasks=1000)
 
     #show_potentials()

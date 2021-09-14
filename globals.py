@@ -21,3 +21,7 @@ class RatingInfo:
     avg_rank: float = 999.0
     rated_tasks: list = field(default_factory=list)
 
+# settings
+PRINT_DIFF          = False
+PRINT_LEADERBOARD   = False
+PRINT_SME           = False

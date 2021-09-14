@@ -31,7 +31,7 @@ class DifficultyManager:
     _COMPONENT_RANGE = (0, 10)
     _DIFF_RANGE = (0, 100)
 
-    def __init__(self, AS_C=0.3, AS_A=9.333, AS_B=0.056, LEN_C=1, LEN_A=.2e-6, PS_C=0, combiner:Combiner=CombinerWeightedSum()):
+    def __init__(self, AS_C=0.5, AS_A=9.333, AS_B=0.056, LEN_C=0.7, LEN_A=.2e-6, PS_C=1.0, combiner:Combiner=CombinerWeightedSum()):
         self.AS_C = AS_C
         self.AS_A = AS_A
         self.AS_B = AS_B
@@ -51,11 +51,12 @@ class DifficultyManager:
             ( self.PS_C,    player_strength_score ),
         ])
 
-        #print(f"Task #{task_info.id} difficulty:")
-        #print(f"  ac_sub:     {acc_sub_score:.2f}")
-        #print(f"  code_len:   {code_len_score:.2f}")
-        #print(f"  player_str: {player_strength_score:.2f}")
-        #print(f"total: {total:.2f}")
+        if PRINT_DIFF:
+            print(f"Task #{task_info.id} difficulty:")
+            print(f"  ac_sub:     {acc_sub_score:.2f}")
+            print(f"  code_len:   {code_len_score:.2f}")
+            print(f"  player_str: {player_strength_score:.2f}")
+            print(f"total: {total:.2f}")
 
         return total
 
@@ -101,7 +102,7 @@ class DeltaManager:
     def default_rating(self):
         return 0.0
 
-    def get_rating_deltas(self, task_diff, scores):
+    def get_rating_deltas(self, task_diff, scores, rankings):
         pass
 
 #task diff determines points for the 1st place
@@ -110,7 +111,7 @@ class TMX_max(DeltaManager):
         DeltaManager.__init__(self)
         self.distrib_f_k = distrib_f_k
 
-    def get_rating_deltas(self, max_pts, scores):
+    def get_rating_deltas(self, max_pts, scores, _):
         return [self._distrib_f(max_pts, x) for x in scores]
 
     def _distrib_f(self, max_score, x):
@@ -121,13 +122,46 @@ class TMX_const(TMX_max):
     def __init__(self):
         TMX_max.__init__(self)
 
-    def get_rating_deltas(self, prize_pool, scores):
+    def get_rating_deltas(self, prize_pool, scores, _):
         first = super().get_rating_deltas(prize_pool, scores)
         return [x*prize_pool/sum(first) for x in first]
 
-class ELO(DeltaManager):
-    pass
+#Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
+class SME(DeltaManager):
+    def __init__(self, sigma=200, k=32):
+        DeltaManager.__init__(self)
+        self.sigma = sigma
+        self.k = k
 
+    def default_rating(self):
+        return 1500.0
+
+    def get_rating_deltas(self, task_diff, scores, rankings):
+        deltas = [0.0 for _ in scores]
+        for i in range(len(scores)-1):
+            dr = self._get_dr(rankings[i], rankings[i+1], task_diff)
+            deltas[i]   += dr
+            deltas[i+1] -= dr
+        return deltas
+    
+    def _get_dr(self, rat_a:float, rat_b:float, task_diff:float):
+        exp = 1 / ( 1 + 10**(-(rat_a-rat_b)/self.sigma) )
+        k = self.k * hlp.interpolate(task_diff, *DifficultyManager._DIFF_RANGE, 0.0, 1.0)
+        dr = k  * (1 - exp)
+        if PRINT_SME:
+            print(f"Match (rank={rat_a:>8.2f}) won vs (rank={rat_b:>8.2f}):  dr={dr:>10.3f}")
+        return dr
+
+#SME Everyone vs Everyone: matches all possible pairs instead of directly up and down
+class SME_EvE(SME):
+    def get_rating_deltas(self, task_diff, scores, rankings):
+        deltas = [0.0 for _ in scores]
+        for i in range(len(scores)-1):
+            for j in range(i+1, len(scores)):
+                dr = self._get_dr(rankings[i], rankings[j], task_diff)
+                deltas[i] += dr
+                deltas[j] -= dr
+        return deltas
 
 
 
@@ -146,15 +180,16 @@ class RatingSystem:
             scores = self.scoring_mgr.get_scores(leaderboard)
             
             task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard, overall_rankings_range)
-            dr = self.delta_mgr.get_rating_deltas(task_diff, scores)
+            dr = self.delta_mgr.get_rating_deltas(task_diff, scores, leaderboard["rankings"])
             for name, delta in zip(leaderboard["name"], dr):
                 self.rankings[name] += delta
             
-            leaderboard["scores"] = scores
-            leaderboard["deltas"] = dr
-            #print(leaderboard)
-            #hlp.plot(scores, partial(self.delta_mgr._distrib_f, task_diff))
-            #plt.show()
+            if PRINT_LEADERBOARD:
+                leaderboard["scores"] = scores
+                leaderboard["deltas"] = dr
+                print(leaderboard)
+                #hlp.plot(scores, partial(self.delta_mgr._distrib_f, task_diff))
+                #plt.show()
 
         return self.rankings
     
