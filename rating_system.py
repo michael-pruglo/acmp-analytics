@@ -16,6 +16,7 @@ class CombinerWeightedSum(Combiner):
             total += coef * val
             max_possible += coef * DifficultyManager._COMPONENT_RANGE[1]
         return hlp.interpolate(total, 0.0, max_possible, *DifficultyManager._DIFF_RANGE)
+#deprecated: less logical and tested to be less effective than weighted sum
 class CombinerMult(Combiner):
     def combine_components(self, comp_list):
         total = max_possible = 1.0

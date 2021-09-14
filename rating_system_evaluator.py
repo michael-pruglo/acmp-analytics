@@ -16,14 +16,14 @@ class RatingHistory:
             self.variance = statistics.variance(self.history, self.mean)
 
 
-def evaluate(rat_systems):
+def evaluate(rat_systems, runs_p=1, runs_nonp=10, tasks=1000):
     with open(_ACCURACY_DIST_GRAPH_FILENAME, 'rb') as f:
         pickle.load(f)
     colors = ["C"+str(i) for i in range(1, len(rat_systems)+1)]
 
     for rs, color in zip(rat_systems, colors):
-        _eval_class(rs, 1000, True, 1, color)
-        _eval_class(rs, 1000, False, 50, color)
+        if runs_p:    _eval_class(rs, tasks, True,  runs_p,    color)
+        if runs_nonp: _eval_class(rs, tasks, False, runs_nonp, color)
 
     plt.legend()
     plt.show()
@@ -36,6 +36,8 @@ def _eval_class(rat_sys:RatingSystem, task_no, persistent=True, runs=1, graphing
     training_data, eval_data = _split_data(data)
     accuracies = []
     for i in range(runs):
+        if i%10==0: print(f"{rat_sys.description}: run {i:>4}/{runs:>4}")
+        
         if persistent:
             random.shuffle(training_data)
         else:
