@@ -149,7 +149,7 @@ class SME(DeltaManager):
         k = self.k * hlp.interpolate(task_diff, *DifficultyManager._DIFF_RANGE, 0.0, 1.0)
         dr = k  * (outcome - exp)
         if PRINT_SME:
-            print(f"Match (rank={rat_a:>8.2f}) won vs (rank={rat_b:>8.2f}):  dr={dr:>10.3f}")
+            print(f"Match (rank={rat_a:>8.2f}) {outcome:.1f} vs (rank={rat_b:>8.2f}): exp={exp:.2f} k={k:.2f} dr={dr:>10.3f}")
         return dr
 
 #SME Everyone vs Everyone: matches all possible pairs instead of directly up and down
