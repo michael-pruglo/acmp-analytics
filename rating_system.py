@@ -144,10 +144,10 @@ class SME(DeltaManager):
             deltas[i+1] -= dr
         return deltas
     
-    def _get_dr(self, rat_a:float, rat_b:float, task_diff:float):
+    def _get_dr(self, rat_a:float, rat_b:float, task_diff:float, outcome:float=1):
         exp = 1 / ( 1 + 10**(-(rat_a-rat_b)/self.sigma) )
         k = self.k * hlp.interpolate(task_diff, *DifficultyManager._DIFF_RANGE, 0.0, 1.0)
-        dr = k  * (1 - exp)
+        dr = k  * (outcome - exp)
         if PRINT_SME:
             print(f"Match (rank={rat_a:>8.2f}) won vs (rank={rat_b:>8.2f}):  dr={dr:>10.3f}")
         return dr
@@ -161,6 +161,24 @@ class SME_EvE(SME):
                 dr = self._get_dr(rankings[i], rankings[j], task_diff)
                 deltas[i] += dr
                 deltas[j] -= dr
+        return deltas
+
+class SME_avgn(SME):
+    def get_rating_deltas(self, task_diff, scores, rankings):
+        deltas = [0.0 for _ in scores]
+        for i in range(len(scores)):
+            if i > 0:
+                deltas[i] += self._get_dr(rankings[i], statistics.mean(rankings[:i]), task_diff, 0)
+            if i < len(scores)-1:
+                deltas[i] += self._get_dr(rankings[i], statistics.mean(rankings[i+1:]), task_diff, 1)
+        return deltas
+
+class SME_avg2(SME):
+    def get_rating_deltas(self, task_diff, scores, rankings):
+        deltas = [0.0 for _ in scores]
+        for i in range(len(scores)):
+            outcome = hlp.interpolate_inverse(scores[i], *SCORE_RANGE, 0.0, 1.0)
+            deltas[i] = self._get_dr(rankings[i], statistics.mean(rankings), task_diff, outcome)
         return deltas
 
 
