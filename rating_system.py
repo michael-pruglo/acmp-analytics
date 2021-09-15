@@ -1,7 +1,7 @@
 import numpy as np, statistics, matplotlib.pyplot as plt
 from functools import partial
 from collections import defaultdict
-from math import isclose
+from math import isclose, sqrt
 from globals import *
 import helpers as hlp
 
@@ -52,16 +52,19 @@ class DifficultyManager:
         ])
 
         if PRINT_DIFF:
+            _a = task_info.accepted_submissions
+            _b = leaderboard["code_len"].median()
+            _c = leaderboard["rankings"]
             print(f"Task #{task_info.id} difficulty:")
-            print(f"  ac_sub:     {acc_sub_score:.2f}")
-            print(f"  code_len:   {code_len_score:.2f}")
-            print(f"  player_str: {player_strength_score:.2f}")
+            print(f"  ac_sub:     {acc_sub_score:.2f} \t {_a}")
+            print(f"  code_len:   {code_len_score:.2f} \t {_b:.2f}")
+            print(f"  player_str: {player_strength_score:.2f} \t {_c.mean():.2f}", hlp.pretty(_c, 1))
             print(f"total: {total:.2f}")
 
         return total
 
     def _get_acc_sub_score(self, acc):
-        return self.AS_A + self.AS_B * np.log(acc)
+        return min([self.AS_A + self.AS_B * np.log(acc), 0.284*sqrt(acc), acc**2/15000])
 
     def _get_code_len_score(self, lengths):
         m = lengths.median()
