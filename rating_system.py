@@ -31,19 +31,20 @@ class DifficultyManager:
     _COMPONENT_RANGE = (0, 10)
     _DIFF_RANGE = (0, 100)
 
-    def __init__(self, AS_C=0.5, AS_A=9.333, AS_B=0.056, LEN_C=0.7, LEN_A=.2e-6, PS_C=1.0, combiner:Combiner=CombinerWeightedSum()):
+    def __init__(self, AS_C=0.5, AS_A=9.333, AS_B=0.056, LEN_C=0.7, LEN_A=.2e-6, PS_A=0.6, PS_C=1.0, combiner:Combiner=CombinerWeightedSum()):
         self.AS_C = AS_C
         self.AS_A = AS_A
         self.AS_B = AS_B
         self.LEN_C = LEN_C
         self.LEN_A = LEN_A
+        self.PS_A = PS_A
         self.PS_C = PS_C
         self.combiner = combiner
 
-    def get_task_difficulty(self, task_info:TaskInfo, leaderboard, ranking_range):
+    def get_task_difficulty(self, task_info:TaskInfo, leaderboard, ranking_mean):
         acc_sub_score = self._get_acc_sub_score(task_info.accepted_submissions)
         code_len_score = self._get_code_len_score(leaderboard["code_len"])
-        player_strength_score = self._get_player_strength_score(leaderboard["rankings"], ranking_range) if self.PS_C else 0.0
+        player_strength_score = self._get_player_strength_score(leaderboard["rankings"], ranking_mean) if self.PS_C else 0.0
 
         total = self.combiner.combine_components([
             ( self.AS_C,    acc_sub_score ),
@@ -58,7 +59,7 @@ class DifficultyManager:
             print(f"Task #{task_info.id} difficulty:")
             print(f"  ac_sub:     {acc_sub_score:.2f} \t {_a}")
             print(f"  code_len:   {code_len_score:.2f} \t {_b:.2f}")
-            print(f"  player_str: {player_strength_score:.2f} \t {_c.mean():.2f}", hlp.pretty(_c, 1))
+            print(f"  player_str: {player_strength_score:.2f} \t {_c.mean():.2f}", hlp.pretty(_c, 1), f"overall_mean: {ranking_mean:.2f}")
             print(f"total: {total:.2f}")
 
         return total
@@ -71,9 +72,9 @@ class DifficultyManager:
         coef = 10 - self.LEN_A * m * m * m
         return max(coef, 0)
 
-    def _get_player_strength_score(self, rankings, ranking_range):
-        mean = statistics.mean(rankings)
-        return hlp.interpolate(mean, *ranking_range, *DifficultyManager._COMPONENT_RANGE)
+    def _get_player_strength_score(self, rankings, overall_rankings_mean):
+        dm = statistics.mean(rankings) - overall_rankings_mean
+        return np.clip(5 + self.PS_A * dm, *DifficultyManager._COMPONENT_RANGE)
 
 
 class ScoringManager:
@@ -230,10 +231,10 @@ class RatingSystem:
     def rate(self, data_list):
         for task_info, leaderboard in data_list:
             leaderboard["rankings"] = [self.rankings[name] for name in leaderboard["name"]]
-            overall_rankings_range = ( min(self.rankings.values()), max(self.rankings.values()) )
+            overall_rankings_mean = statistics.mean(self.rankings.values())
             scores = self.scoring_mgr.get_scores(leaderboard)
             
-            task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard, overall_rankings_range)
+            task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard, overall_rankings_mean)
             dr = self.delta_mgr.get_rating_deltas(task_diff, scores, leaderboard["rankings"])
             for name, delta in zip(leaderboard["name"], dr):
                 self.rankings[name] += delta
