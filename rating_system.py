@@ -126,31 +126,61 @@ class TMX_const(TMX_max):
         first = super().get_rating_deltas(prize_pool, scores, _)
         return [x*prize_pool/sum(first) for x in first]
 
-#Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
-class SME(DeltaManager):
+class ELO:
     def __init__(self, sigma=200, k=32):
-        DeltaManager.__init__(self)
         self.sigma = sigma
         self.k = k
-
+        
     def default_rating(self):
         return 1500.0
 
-    def get_rating_deltas(self, task_diff, scores, rankings):
-        deltas = [0.0 for _ in scores]
-        for i in range(len(scores)-1):
-            dr = self._get_dr(rankings[i], rankings[i+1], task_diff)
-            deltas[i]   += dr
-            deltas[i+1] -= dr
-        return deltas
-    
-    def _get_dr(self, rat_a:float, rat_b:float, task_diff:float, outcome:float=1):
-        exp = 1 / ( 1 + 10**(-(rat_a-rat_b)/self.sigma) )
+    def get_outcome(self, score_a, score_b):
+        if score_a < score_b: return 1
+        if score_a > score_b: return 0
+        return 0.5
+
+    def get_dr(self, rat_a:float, rat_b:float, task_diff:float, outcome:float=1):
+        exp = self._get_estimate(rat_a, rat_b)
         k = self.k * hlp.interpolate(task_diff, *DifficultyManager._DIFF_RANGE, 0.0, 1.0)
         dr = k  * (outcome - exp)
         if PRINT_SME:
             print(f"Match (rank={rat_a:>8.2f}) {outcome:.1f} vs (rank={rat_b:>8.2f}): exp={exp:.2f} k={k:.2f} dr={dr:>10.3f}")
         return dr
+    
+    def _get_estimate(self, rat_a:float, rat_b:float):
+        return 1 / ( 1 + 10**(-(rat_a-rat_b)/self.sigma) )
+
+#Margin Of Victory:
+# http://www2.stat-athens.aueb.gr/~jbn/conferences/MathSport_presentations/plenary%20talks/P3%20-%20Kovalchik%20-%20Extensions%20of%20the%20Elo%20Rating%20System%20for%20Margin%20of%20Victory.pdf
+# https://rdrr.io/github/GIGTennis/elomov/src/R/linear.R
+class MOV(ELO):
+    def __init__(self, stdev=4):
+        super().__init__(sigma=25*stdev, k=stdev)
+
+    def get_outcome(self, score_a, score_b):
+        return score_b - score_a
+
+    def _get_estimate(self, rat_a:float, rat_b:float):
+        return (rat_a-rat_b) / self.sigma
+
+
+#Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
+class SME(DeltaManager):
+    def __init__(self, elo_mgr:ELO=ELO()):
+        super().__init__()
+        self.elo_mgr = elo_mgr
+
+    def default_rating(self):
+        return self.elo_mgr.default_rating()
+
+    def get_rating_deltas(self, task_diff, scores, rankings):
+        deltas = [0.0 for _ in scores]
+        for i in range(len(scores)-1):
+            outcome = self.elo_mgr.get_outcome(scores[i], scores[i+1])
+            dr = self.elo_mgr.get_dr(rankings[i], rankings[i+1], task_diff, outcome)
+            deltas[i]   += dr
+            deltas[i+1] -= dr
+        return deltas
 
 #SME Everyone vs Everyone: matches all possible pairs instead of directly up and down
 class SME_EvE(SME):
@@ -158,7 +188,8 @@ class SME_EvE(SME):
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)-1):
             for j in range(i+1, len(scores)):
-                dr = self._get_dr(rankings[i], rankings[j], task_diff)
+                outcome = self.elo_mgr.get_outcome(scores[i], scores[j])
+                dr = self.elo_mgr.get_dr(rankings[i], rankings[j], task_diff, outcome)
                 deltas[i] += dr
                 deltas[j] -= dr
         return deltas
@@ -168,9 +199,11 @@ class SME_avgn(SME):
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)):
             if i > 0:
-                deltas[i] += self._get_dr(rankings[i], statistics.mean(rankings[:i]), task_diff, 0)
+                outcome = self.elo_mgr.get_outcome(scores[i], statistics.mean(scores[:i]))
+                deltas[i] += self.elo_mgr.get_dr(rankings[i], statistics.mean(rankings[:i]), task_diff, outcome)
             if i < len(scores)-1:
-                deltas[i] += self._get_dr(rankings[i], statistics.mean(rankings[i+1:]), task_diff, 1)
+                outcome = self.elo_mgr.get_outcome(scores[i], statistics.mean(scores[i+1:]))
+                deltas[i] += self.elo_mgr.get_dr(rankings[i], statistics.mean(rankings[i+1:]), task_diff, outcome)
         return deltas
 
 class SME_avg2(SME):
@@ -178,7 +211,7 @@ class SME_avg2(SME):
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)):
             outcome = hlp.interpolate_inverse(scores[i], *SCORE_RANGE, 0.0, 1.0)
-            deltas[i] = self._get_dr(rankings[i], statistics.mean(rankings), task_diff, outcome)
+            deltas[i] = self.elo_mgr.get_dr(rankings[i], statistics.mean(rankings), task_diff, outcome)
         return deltas
 
 

@@ -27,11 +27,14 @@ if __name__ == "__main__":
     rating_system_evaluator.evaluate([
        #RatingSystem(DifficultyManager(), ScoringManager(), TMX_max(), description="tmx max"),
        #RatingSystem(DifficultyManager(), ScoringManager(), TMX_const(), description="tmx const"),
-       RatingSystem(DifficultyManager(), ScoringManager(), SME(), description="sme"),
-       RatingSystem(DifficultyManager(), ScoringManager(), SME_EvE(410, 35), description="sme eve"),
-       RatingSystem(DifficultyManager(), ScoringManager(), SME_avgn(), description="sme avgn"),
-       RatingSystem(DifficultyManager(), ScoringManager(), SME_avg2(), description="sme avg2"),
+       #RatingSystem(DifficultyManager(), ScoringManager(), SME(), description="sme"),
+       RatingSystem(DifficultyManager(), ScoringManager(), SME(MOV()), description="sme mov"),
+       #RatingSystem(DifficultyManager(), ScoringManager(), SME_EvE(ELO(410, 35)), description="sme eve"),
+       RatingSystem(DifficultyManager(), ScoringManager(), SME_EvE(MOV()), description="sme eve mov"),
+       #RatingSystem(DifficultyManager(), ScoringManager(), SME_avgn(), description="sme avgn"),
+       RatingSystem(DifficultyManager(), ScoringManager(), SME_avgn(MOV()), description="sme avgn mov"),
+       #RatingSystem(DifficultyManager(), ScoringManager(), SME_avg2(), description="sme avg2"),
+       RatingSystem(DifficultyManager(), ScoringManager(), SME_avg2(MOV()), description="sme avg2 mov"),
     ],
-    0, 30, tasks=1000)
+    0, 10, tasks=1000)
 
-    #show_potentials()
