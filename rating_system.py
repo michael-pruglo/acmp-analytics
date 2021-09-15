@@ -123,7 +123,7 @@ class TMX_const(TMX_max):
         TMX_max.__init__(self)
 
     def get_rating_deltas(self, prize_pool, scores, _):
-        first = super().get_rating_deltas(prize_pool, scores)
+        first = super().get_rating_deltas(prize_pool, scores, _)
         return [x*prize_pool/sum(first) for x in first]
 
 #Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
