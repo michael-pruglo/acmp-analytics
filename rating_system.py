@@ -158,7 +158,7 @@ class ELO:
 # http://www2.stat-athens.aueb.gr/~jbn/conferences/MathSport_presentations/plenary%20talks/P3%20-%20Kovalchik%20-%20Extensions%20of%20the%20Elo%20Rating%20System%20for%20Margin%20of%20Victory.pdf
 # https://rdrr.io/github/GIGTennis/elomov/src/R/linear.R
 class MOV(ELO):
-    def __init__(self, stdev=4):
+    def __init__(self, stdev=7):
         super().__init__(sigma=25*stdev, k=stdev)
 
     def get_outcome(self, score_a, score_b):
@@ -188,6 +188,10 @@ class SME(DeltaManager):
 
 #SME Everyone vs Everyone: matches all possible pairs instead of directly up and down
 class SME_EvE(SME):
+    def __init__(self, elo_mgr: ELO):
+        elo_mgr.k /= 19
+        super().__init__(elo_mgr)
+
     def get_rating_deltas(self, task_diff, scores, rankings):
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)-1):
