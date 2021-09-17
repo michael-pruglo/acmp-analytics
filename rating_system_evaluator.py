@@ -6,14 +6,14 @@ import database, helpers as hlp
 @dataclass
 class RatingHistory:
     mean: float = 0.0
-    variance: float = 0.0
+    std: float = 0.0
     history: list = field(default_factory=list)
 
     def add_rating(self, val):
         self.history.append(val)
         self.mean = statistics.mean(self.history)
         if len(self.history) > 1:
-            self.variance = statistics.variance(self.history, self.mean)
+            self.std = statistics.pstdev(self.history, self.mean)
 
 
 def evaluate(rat_systems, runs_p=1, runs_nonp=10, tasks=1000):
@@ -69,12 +69,12 @@ def _print_results(rs_name, ratings, accuracies, persistent, graphing_color):
         print("\n\n"+"="*111)
         print(f"rating system: {rs_name}")
         print(f"accuracy:      {avg_accuracy:.3f}")
-        print(f"variance:      {statistics.mean([rh.variance for rh in ratings.values()]):.3f}")
+        print(f"stdev:         {statistics.mean([rh.std for rh in ratings.values()]):.3f}")
         print()
     
     def _print_rankings():
         for i, (name, hist) in enumerate(sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True)[:10]):
-            print(f"{i+1:>3} {name:<32} {hist.mean:>12.3f} {hist.variance:>10.2f}    ", hlp.pretty(hist.history, 2))
+            print(f"{i+1:>3} {name:<32} {hist.mean:>12.3f} {hist.std:>10.2f}    ", hlp.pretty(hist.history, 2))
     
     def _plot_vertical_lines():
         if persistent:
@@ -118,9 +118,15 @@ def _cache_accuracy_dist_graph(N = 10000):
 
     fig_handle = plt.figure("accuracy distribution", figsize=(17,5))
     plt.hist(norms, 300, density=True)
-    plt.axvline(statistics.mean(norms),     color='y', linestyle="dashed", label="mean")
-    plt.axvline(statistics.median(norms),   color='y', linestyle="dashed", label="median")
-    plt.axvline(v_opposite,                 color='r', linestyle="dashed", label="worst")
+    mu = statistics.mean(norms)
+    std = statistics.stdev(norms)
+    plt.axvline(mu, color='orange', label="mean")
+    plt.axvline(mu-3*std,   color='y')
+    plt.axvline(mu-2*std,   color='y')
+    plt.axvline(mu-1*std,   color='y')
+    plt.axvline(mu+1*std,   color='y')
+    plt.axvline(mu+2*std,   color='y')
+    plt.axvline(mu+3*std,   color='y')
     with open(_ACCURACY_DIST_GRAPH_FILENAME, 'wb') as f:
         pickle.dump(fig_handle, f) 
     print("success")
