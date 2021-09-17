@@ -1,9 +1,48 @@
-import numpy as np, statistics, matplotlib.pyplot as plt, trueskill
+import numpy as np, pandas as pd, statistics, matplotlib.pyplot as plt, trueskill
 from functools import partial
 from collections import defaultdict
 from math import isclose, sqrt
 from globals import *
+from typing import DefaultDict, List
 import helpers as hlp
+
+class Rating:
+    def __init__(self, val=None) -> None:
+        self.val = val if val else Rating.default_val()
+    def default_val():
+        return 0.0
+    def __float__(self):
+        return self.val
+    def __add__(self, f:float):
+        return float(self) + f
+    def __sub__(self, f:float):
+        return float(self) - f
+    def __gt__(self, f:float):
+        return float(self) > f
+    def __lt__(self, f:float):
+        return float(self) < f
+    def __eq__(self, f:float):
+        return float(self) == f
+    def __str__(self) -> str:
+        return f"{self.val:.2f}"
+    def __repr__(self) -> str:
+        return f"{self.val:.2f}"
+
+class EloRating(Rating):
+    def default_val():
+        return 1500.0
+class TrueSkillRating(Rating):
+    def default_val():
+        return trueskill.Rating()
+    def __str__(self) -> str:
+        return f"TrueSkill(μ={self.val.mu:>5.2f} σ={self.val.sigma:>5.2f} float:{float(self.val):>5.2f})"
+    def __repr__(self) -> str:
+        return f"TrueSkill(μ={self.val.mu:>5.2f} σ={self.val.sigma:>5.2f} float:{float(self.val):>5.2f})"
+    def __float__(self):
+        return trueskill.expose(self.val)
+class TrueSkillRatingMean(TrueSkillRating):
+    def __float__(self):
+        return self.val.mu
 
 class Combiner:
     def combine_components(self, comp_list):
@@ -31,25 +70,22 @@ class DifficultyManager:
     _COMPONENT_RANGE = (0, 10)
     _DIFF_RANGE = (0, 100)
 
-    def __init__(self, AS_C=0.5, AS_A=9.333, AS_B=0.056, LEN_C=0.7, LEN_A=.2e-6, PS_A=0.6, PS_C=0, combiner:Combiner=CombinerWeightedSum()):
+    def __init__(self, AS_C=0.5, AS_A=9.333, AS_B=0.056, LEN_C=0.7, LEN_A=.2e-6, PS_A=0.6, combiner:Combiner=CombinerWeightedSum()):
         self.AS_C = AS_C
         self.AS_A = AS_A
         self.AS_B = AS_B
         self.LEN_C = LEN_C
         self.LEN_A = LEN_A
         self.PS_A = PS_A
-        self.PS_C = PS_C
         self.combiner = combiner
 
-    def get_task_difficulty(self, task_info:TaskInfo, leaderboard, ranking_mean):
+    def get_task_difficulty(self, task_info:TaskInfo, leaderboard:pd.DataFrame):
         acc_sub_score = self._get_acc_sub_score(task_info.accepted_submissions)
         code_len_score = self._get_code_len_score(leaderboard["code_len"])
-        player_strength_score = self._get_player_strength_score(leaderboard["rankings"], ranking_mean) if self.PS_C else 0.0
 
         total = self.combiner.combine_components([
             ( self.AS_C,    acc_sub_score ),
             ( self.LEN_C,   code_len_score ),
-            ( self.PS_C,    player_strength_score ),
         ])
 
         if PRINT_DIFF:
@@ -59,7 +95,6 @@ class DifficultyManager:
             print(f"Task #{task_info.id} difficulty:")
             print(f"  ac_sub:     {acc_sub_score:.2f} \t {_a}")
             print(f"  code_len:   {code_len_score:.2f} \t {_b:.2f}")
-            print(f"  player_str: {player_strength_score:.2f} \t {_c.mean():.2f}", hlp.pretty(_c, 1), f"overall_mean: {ranking_mean:.2f}")
             print(f"total: {total:.2f}")
 
         return total
@@ -71,12 +106,6 @@ class DifficultyManager:
         m = lengths.median()
         coef = 10 - self.LEN_A * m * m * m
         return max(coef, 0)
-
-    #practically it flopped, so keeping PS_C=0 for now
-    def _get_player_strength_score(self, rankings, overall_rankings_mean):
-        dm = statistics.mean(rankings) - overall_rankings_mean
-        return np.clip(5 + self.PS_A * dm, *DifficultyManager._COMPONENT_RANGE)
-
 
 class ScoringManager:
     def __init__(self, percent_spread=15, deal_with_ties=True):
@@ -105,43 +134,6 @@ class ScoringManager:
         assert(isclose(sum(scores), sum_before))
         return scores 
 
-
-class DeltaManager:
-    def default_rating(self):
-        return 0.0
-
-    def get_rating_deltas(self, task_diff, scores, rankings):
-        pass
-
-    def update_rank(self, prev_rank, delta):
-        return prev_rank + delta
-
-    def get_overall_leaderboard(self, rankings):
-        return rankings
-
-    def expose_list(self, l):
-        return l
-
-#task diff determines points for the 1st place
-class TMX_max(DeltaManager):
-    def __init__(self, distrib_f_k=0.29):
-        DeltaManager.__init__(self)
-        self.distrib_f_k = distrib_f_k
-
-    def get_rating_deltas(self, max_pts, scores, _):
-        return [self._distrib_f(max_pts, x) for x in scores]
-
-    def _distrib_f(self, max_score, x):
-        return max_score*(1 - self.distrib_f_k*np.log(x))
-
-#task diff determines prize pool for all 20
-class TMX_const(TMX_max):
-    def __init__(self):
-        TMX_max.__init__(self)
-
-    def get_rating_deltas(self, prize_pool, scores, _):
-        first = super().get_rating_deltas(prize_pool, scores, _)
-        return [x*prize_pool/sum(first) for x in first]
 
 class ELO:
     def __init__(self, sigma=200, k=32):
@@ -181,20 +173,56 @@ class MOV(ELO):
         return (rat_a-rat_b) / self.sigma
 
 
+
+
+class RatingSystemLogic:
+    def calc_updated_ranks(self, curr_ranks:List[Rating], task_info:TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
+        assert(len(curr_ranks) == len(leaderboard.index))
+        assert("scores" in leaderboard.columns)
+        return self._calc_updated_ranks_impl(curr_ranks, task_info, leaderboard)
+
+    def _calc_updated_ranks_impl(self, curr_ranks:List[Rating], task_info:TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
+        pass
+
+#task diff determines points for the 1st place
+class TMX_max(RatingSystemLogic):
+    def __init__(self, difficulty_mgr:DifficultyManager=DifficultyManager(), distrib_f_k=0.29) -> None:
+        super().__init__()
+        self.diff_mgr = difficulty_mgr
+        self.distrib_f_k = distrib_f_k
+
+    def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
+        max_pts = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
+        return [ curr_r + self._distrib_f(max_pts, x) for curr_r, x in zip(curr_ranks, leaderboard["scores"]) ]
+
+    def _distrib_f(self, max_score, x):
+        return max_score*(1 - self.distrib_f_k*np.log(x))
+#task diff determines prize pool for all 20
+class TMX_const(TMX_max):
+    def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard: pd.DataFrame) -> List[Rating]:
+        prize_pool = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
+        first = super()._calc_updated_ranks_impl(curr_ranks, task_info, leaderboard)
+        return [x*prize_pool/sum(first) for x in first]
+
+
 #Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
-class SME(DeltaManager):
-    def __init__(self, elo_mgr:ELO=ELO()):
+class SME(RatingSystemLogic):
+    def __init__(self, elo_mgr:ELO=ELO(), difficulty_mgr:DifficultyManager=DifficultyManager()):
         super().__init__()
         self.elo_mgr = elo_mgr
+        self.diff_mgr = difficulty_mgr
 
-    def default_rating(self):
-        return self.elo_mgr.default_rating()
+    def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard: pd.DataFrame) -> List[Rating]:
+        scores = leaderboard["scores"]
+        task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
+        deltas = self._get_rating_deltas(task_diff, scores, curr_ranks)
+        return [EloRating(curr + dr) for curr, dr in zip(curr_ranks, deltas)]
 
-    def get_rating_deltas(self, task_diff, scores, rankings):
+    def _get_rating_deltas(self, task_diff:float, scores:List[float], curr_ranks:List[Rating]) -> List[float]:
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)-1):
             outcome = self.elo_mgr.get_outcome(scores[i], scores[i+1])
-            dr = self.elo_mgr.get_dr(rankings[i], rankings[i+1], task_diff, outcome)
+            dr = self.elo_mgr.get_dr(curr_ranks[i], curr_ranks[i+1], task_diff, outcome)
             deltas[i]   += dr
             deltas[i+1] -= dr
         return deltas
@@ -205,101 +233,94 @@ class SME_EvE(SME):
         elo_mgr.k /= 19
         super().__init__(elo_mgr)
 
-    def get_rating_deltas(self, task_diff, scores, rankings):
+    def _get_rating_deltas(self, task_diff: float, scores: List[float], curr_ranks: List[Rating]) -> List[float]:
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)-1):
             for j in range(i+1, len(scores)):
                 outcome = self.elo_mgr.get_outcome(scores[i], scores[j])
-                dr = self.elo_mgr.get_dr(rankings[i], rankings[j], task_diff, outcome)
+                dr = self.elo_mgr.get_dr(curr_ranks[i], curr_ranks[j], task_diff, outcome)
                 deltas[i] += dr
                 deltas[j] -= dr
         return deltas
 
 class SME_avgn(SME):
-    def get_rating_deltas(self, task_diff, scores, rankings):
+    def _get_rating_deltas(self, task_diff: float, scores: List[float], curr_ranks: List[Rating]) -> List[float]:
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)):
             if i > 0:
                 outcome = self.elo_mgr.get_outcome(scores[i], statistics.mean(scores[:i]))
-                deltas[i] += self.elo_mgr.get_dr(rankings[i], statistics.mean(rankings[:i]), task_diff, outcome)
+                deltas[i] += self.elo_mgr.get_dr(curr_ranks[i], statistics.mean(curr_ranks[:i]), task_diff, outcome)
             if i < len(scores)-1:
                 outcome = self.elo_mgr.get_outcome(scores[i], statistics.mean(scores[i+1:]))
-                deltas[i] += self.elo_mgr.get_dr(rankings[i], statistics.mean(rankings[i+1:]), task_diff, outcome)
+                deltas[i] += self.elo_mgr.get_dr(curr_ranks[i], statistics.mean(curr_ranks[i+1:]), task_diff, outcome)
         return deltas
 
 class SME_avg2(SME):
-    def get_rating_deltas(self, task_diff, scores, rankings):
+    def _get_rating_deltas(self, task_diff: float, scores: List[float], curr_ranks: List[Rating]) -> List[float]:
         deltas = [0.0 for _ in scores]
         for i in range(len(scores)):
             outcome = hlp.interpolate_inverse(scores[i], *SCORE_RANGE, 0.0, 1.0)
-            deltas[i] = self.elo_mgr.get_dr(rankings[i], statistics.mean(rankings), task_diff, outcome)
+            deltas[i] = self.elo_mgr.get_dr(curr_ranks[i], statistics.mean(curr_ranks), task_diff, outcome)
         return deltas
 
 
-class TrueSkill(DeltaManager):
-    def default_rating(self):
-        return trueskill.Rating()
+class TrueSkill(RatingSystemLogic):
+    def _calc_updated_ranks_impl(self, curr_ranks:List[Rating], task_info:TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
+        scores = leaderboard["scores"]
+        leaderboard_is_sorted = all(scores[i] <= scores[i+1] for i in range(len(scores)-1))
+        assert(leaderboard_is_sorted)
 
-    def get_rating_deltas(self, _, scores, rankings):
-        scores_are_sorted = all(scores[i] <= scores[i+1] for i in range(len(scores)-1))
-        assert(scores_are_sorted)
-        wrapped_rankings = [[rank] for rank in rankings]
+        wrapped_rankings = [[rank.val] for rank in curr_ranks]
         upd_rankings = trueskill.rate(wrapped_rankings)
-        return [tpl[0] for tpl in upd_rankings]
+        unwrapped_results = [TrueSkillRating(tpl[0]) for tpl in upd_rankings]
 
-    def update_rank(self, _, new_value):
-        return new_value
+        return unwrapped_results
 
-    def get_overall_leaderboard(self, rankings):
-        return { name:trueskill.expose(rank) for (name, rank) in rankings.items() }
 
-    def expose_list(self, l):
-        return [trueskill.expose(rank) for rank in l]
+
 
 
 class RatingSystem:
-    def __init__(self, diff_mgr:DifficultyManager, scoring_mgr:ScoringManager, delta_mgr:DeltaManager, description="n/a"):
-        self.diff_mgr = diff_mgr
+    def __init__(self, logic:RatingSystemLogic, scoring_mgr:ScoringManager=ScoringManager(), description="n/a"):
+        self.logic = logic
         self.scoring_mgr = scoring_mgr
-        self.delta_mgr = delta_mgr
-        self.rankings = defaultdict(self.delta_mgr.default_rating)
+        self.rankings : DefaultDict[str, Rating] = defaultdict(Rating)
         self.description = description
 
-    def rate(self, data_list):
+    def rate(self, data_list) -> DefaultDict[str, Rating]:
         for task_info, leaderboard in data_list:
-            leaderboard["rankings"] = [self.rankings[name] for name in leaderboard["name"]]
-            overall_rankings_mean = statistics.mean(self.delta_mgr.get_overall_leaderboard(self.rankings).values())
-            scores = self.scoring_mgr.get_scores(leaderboard)
-            
-            task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard, overall_rankings_mean)
-            dr = self.delta_mgr.get_rating_deltas(task_diff, scores, leaderboard["rankings"])
-            for name, delta in zip(leaderboard["name"], dr):
-                self.rankings[name] = self.delta_mgr.update_rank(self.rankings[name], delta)
-            
-            if PRINT_LEADERBOARD:
-                leaderboard["scores"] = scores
-                leaderboard["deltas"] = dr
-                print(leaderboard)
-                #hlp.plot(scores, partial(self.delta_mgr._distrib_f, task_diff))
-                #plt.show()
+            leaderboard["scores"] = self.scoring_mgr.get_scores(leaderboard)
+            curr_ranks = [self.rankings[name] for name in leaderboard["name"]]
+            new_ranks = self.logic.calc_updated_ranks(curr_ranks, task_info, leaderboard)
+            for name, new_r in zip(leaderboard["name"], new_ranks):
+                self.rankings[name] = new_r
 
-        return self.delta_mgr.get_overall_leaderboard(self.rankings)
-    
+            if PRINT_LEADERBOARD:
+                leaderboard["curr_ranks"] = curr_ranks
+                leaderboard["new_ranks"] = new_ranks
+                print(leaderboard)
+ 
+        return self.rankings
+
     def eval_accuracy(self, data_list) -> float:
         return statistics.mean([self._eval_accuracy_task(task_info, leaderboard) for task_info, leaderboard in data_list])
 
     def reset(self) -> None:
-        self.rankings = defaultdict(self.delta_mgr.default_rating)
+        self.rankings = defaultdict(Rating)
 
     def _eval_accuracy_task(self, _, leaderboard) -> float:
-        leaderboard["rankings"] = self.delta_mgr.expose_list([self.rankings[name] for name in leaderboard["name"]])
-        ov_rankings = self.delta_mgr.get_overall_leaderboard(self.rankings)
-        overall_rankings_range = ( min(ov_rankings.values()), max(ov_rankings.values()) )
+        curr_ranks = [self.rankings[name] for name in leaderboard["name"]]
         scores = self.scoring_mgr.get_scores(leaderboard)
+        exp_scores = [
+            hlp.interpolate_inverse(float(x), float(min(self.rankings.values())), float(max(self.rankings.values())), *SCORE_RANGE) 
+            for x in curr_ranks
+        ]
+        norm = np.linalg.norm(np.array(scores)-np.array(exp_scores))
 
-        interp_ratings = [hlp.interpolate_inverse(x, *overall_rankings_range, *SCORE_RANGE) for x in leaderboard["rankings"]]
-        norm = np.linalg.norm(np.array(scores)-np.array(interp_ratings))
-        
+        if PRINT_LEADERBOARD:
+            leaderboard["scores"] = scores
+            leaderboard["exp_scores"] = exp_scores
+            print(leaderboard)
+
         return norm
 
-            
