@@ -31,7 +31,7 @@ class DifficultyManager:
     _COMPONENT_RANGE = (0, 10)
     _DIFF_RANGE = (0, 100)
 
-    def __init__(self, AS_C=0.5, AS_A=9.333, AS_B=0.056, LEN_C=0.7, LEN_A=.2e-6, PS_A=0.6, PS_C=1.0, combiner:Combiner=CombinerWeightedSum()):
+    def __init__(self, AS_C=0.5, AS_A=9.333, AS_B=0.056, LEN_C=0.7, LEN_A=.2e-6, PS_A=0.6, PS_C=0, combiner:Combiner=CombinerWeightedSum()):
         self.AS_C = AS_C
         self.AS_A = AS_A
         self.AS_B = AS_B
@@ -72,6 +72,7 @@ class DifficultyManager:
         coef = 10 - self.LEN_A * m * m * m
         return max(coef, 0)
 
+    #practically it flopped, so keeping PS_C=0 for now
     def _get_player_strength_score(self, rankings, overall_rankings_mean):
         dm = statistics.mean(rankings) - overall_rankings_mean
         return np.clip(5 + self.PS_A * dm, *DifficultyManager._COMPONENT_RANGE)
