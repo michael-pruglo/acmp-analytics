@@ -5,7 +5,7 @@ import pickle, atexit, os
 _LEADERBOARD_CACHE_FILENAME = "dbcache/leaderboards_cache.h5"
 _AC_SUB_CACHE_FILENAME = "dbcache/ac_sub_cache.p"
 def _init_leaderboards_cache():
-    return pd.HDFStore(_LEADERBOARD_CACHE_FILENAME, complevel=7, complib='lzo')
+    return pd.HDFStore(_LEADERBOARD_CACHE_FILENAME, complevel=7, complib='zlib')
 
 _leaderboards_cache = _init_leaderboards_cache()
 _ac_sub_cache = {}
