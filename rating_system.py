@@ -8,7 +8,7 @@ import helpers as hlp
 
 class Rating:
     def __init__(self, val=None) -> None:
-        self.val = val if val else Rating.default_val()
+        self.val = val if val else self.__class__.default_val()
     def default_val():
         return 0.0
     def __float__(self):
@@ -35,9 +35,9 @@ class TrueSkillRating(Rating):
     def default_val():
         return trueskill.Rating()
     def __str__(self) -> str:
-        return f"TrueSkill(μ={self.val.mu:>5.2f} σ={self.val.sigma:>5.2f} float:{float(self.val):>5.2f})"
+        return f"TrueSkill(μ={self.val.mu:>5.2f} σ={self.val.sigma:>5.2f} float:{float(self):>5.2f})"
     def __repr__(self) -> str:
-        return f"TrueSkill(μ={self.val.mu:>5.2f} σ={self.val.sigma:>5.2f} float:{float(self.val):>5.2f})"
+        return f"TrueSkill(μ={self.val.mu:>5.2f} σ={self.val.sigma:>5.2f} float:{float(self):>5.2f})"
     def __float__(self):
         return trueskill.expose(self.val)
 class TrueSkillRatingMean(TrueSkillRating):
@@ -91,7 +91,6 @@ class DifficultyManager:
         if PRINT_DIFF:
             _a = task_info.accepted_submissions
             _b = leaderboard["code_len"].median()
-            _c = leaderboard["rankings"]
             print(f"Task #{task_info.id} difficulty:")
             print(f"  ac_sub:     {acc_sub_score:.2f} \t {_a}")
             print(f"  code_len:   {code_len_score:.2f} \t {_b:.2f}")
@@ -176,6 +175,8 @@ class MOV(ELO):
 
 
 class RatingSystemLogic:
+    RatingT = Rating
+
     def calc_updated_ranks(self, curr_ranks:List[Rating], task_info:TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
         assert(len(curr_ranks) == len(leaderboard.index))
         assert("scores" in leaderboard.columns)
@@ -202,11 +203,13 @@ class TMX_const(TMX_max):
     def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard: pd.DataFrame) -> List[Rating]:
         prize_pool = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
         first = super()._calc_updated_ranks_impl(curr_ranks, task_info, leaderboard)
-        return [x*prize_pool/sum(first) for x in first]
+        return [ curr_r + x*prize_pool/sum(first) for curr_r, x in zip(curr_ranks, first)]
 
 
 #Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
 class SME(RatingSystemLogic):
+    RatingT = EloRating
+
     def __init__(self, elo_mgr:ELO=ELO(), difficulty_mgr:DifficultyManager=DifficultyManager()):
         super().__init__()
         self.elo_mgr = elo_mgr
@@ -265,14 +268,16 @@ class SME_avg2(SME):
 
 
 class TrueSkill(RatingSystemLogic):
+    RatingT = TrueSkillRating
+
     def _calc_updated_ranks_impl(self, curr_ranks:List[Rating], task_info:TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
         scores = leaderboard["scores"]
         leaderboard_is_sorted = all(scores[i] <= scores[i+1] for i in range(len(scores)-1))
         assert(leaderboard_is_sorted)
 
-        wrapped_rankings = [[rank.val] for rank in curr_ranks]
+        wrapped_rankings = [[curr_ranks[0].val] for rank in curr_ranks]
         upd_rankings = trueskill.rate(wrapped_rankings)
-        unwrapped_results = [TrueSkillRating(tpl[0]) for tpl in upd_rankings]
+        unwrapped_results = [self.RatingT(tpl[0]) for tpl in upd_rankings]
 
         return unwrapped_results
 
@@ -284,7 +289,7 @@ class RatingSystem:
     def __init__(self, logic:RatingSystemLogic, scoring_mgr:ScoringManager=ScoringManager(), description="n/a"):
         self.logic = logic
         self.scoring_mgr = scoring_mgr
-        self.rankings : DefaultDict[str, Rating] = defaultdict(Rating)
+        self.rankings : DefaultDict[str, Rating] = defaultdict(logic.RatingT)
         self.description = description
 
     def rate(self, data_list) -> DefaultDict[str, Rating]:
@@ -306,18 +311,19 @@ class RatingSystem:
         return statistics.mean([self._eval_accuracy_task(task_info, leaderboard) for task_info, leaderboard in data_list])
 
     def reset(self) -> None:
-        self.rankings = defaultdict(Rating)
+        self.rankings = defaultdict(self.logic.RatingT)
 
     def _eval_accuracy_task(self, _, leaderboard) -> float:
         curr_ranks = [self.rankings[name] for name in leaderboard["name"]]
         scores = self.scoring_mgr.get_scores(leaderboard)
         exp_scores = [
-            hlp.interpolate_inverse(float(x), float(min(self.rankings.values())), float(max(self.rankings.values())), *SCORE_RANGE) 
+            hlp.interpolate_inverse(float(x), float(min(curr_ranks)), float(max(curr_ranks)), *SCORE_RANGE) 
             for x in curr_ranks
         ]
         norm = np.linalg.norm(np.array(scores)-np.array(exp_scores))
 
         if PRINT_LEADERBOARD:
+            leaderboard["curr_ranks"] = leaderboard["new_ranks"] = curr_ranks
             leaderboard["scores"] = scores
             leaderboard["exp_scores"] = exp_scores
             print(leaderboard)
