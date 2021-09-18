@@ -13,15 +13,7 @@ class TaskInfo(NamedTuple):
         return f"{self.lang.name}{self.id}"
 
 
-from dataclasses import dataclass, field
-@dataclass
-class RatingInfo:
-    tmx_points: float = 0.0
-    elo: float = 0.0
-    avg_rank: float = 999.0
-    rated_tasks: list = field(default_factory=list)
-
 # settings
-PRINT_DIFF          = False
-PRINT_LEADERBOARD   = False
+PRINT_DIFF          = True
+PRINT_LEADERBOARD   = True
 PRINT_SME           = False

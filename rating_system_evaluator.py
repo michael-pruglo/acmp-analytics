@@ -1,4 +1,5 @@
 import random, statistics, pickle, numpy as np, matplotlib.pyplot as plt
+from dataclasses import dataclass, field
 from globals import *
 from rating_system import RatingSystem
 import database, helpers as hlp
