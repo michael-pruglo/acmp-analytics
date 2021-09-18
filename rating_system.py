@@ -15,8 +15,8 @@ class Rating:
         return self.val
     def __add__(self, f:float):
         return float(self) + f
-    def __sub__(self, f:float):
-        return float(self) - f
+    def __sub__(self, other):
+        return float(self) - float(other)
     def __gt__(self, f:float):
         return float(self) > f
     def __lt__(self, f:float):
@@ -203,7 +203,7 @@ class TMX_const(TMX_max):
     def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard: pd.DataFrame) -> List[Rating]:
         prize_pool = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
         first = super()._calc_updated_ranks_impl(curr_ranks, task_info, leaderboard)
-        return [ curr_r + x*prize_pool/sum(first) for curr_r, x in zip(curr_ranks, first)]
+        return [ curr_r + (float(x)-float(curr_r))*prize_pool/sum(first) for curr_r, x in zip(curr_ranks, first)]
 
 
 #Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
