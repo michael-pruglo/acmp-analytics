@@ -73,7 +73,7 @@ def _print_results(rs_name, ratings, accuracies, persistent, graphing_color):
         print()
     
     def _print_rankings():
-        for i, (name, hist) in enumerate(sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True)[:10]):
+        for i, (name, hist) in enumerate(sorted(ratings.items(), key=lambda x: x[1].mean, reverse=True)[:20]):
             print(f"{i+1:>3} {name:<32} {hist.mean:>12.3f} {hist.std:>10.2f}    ", hist.history)
     
     def _plot_vertical_lines():

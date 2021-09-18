@@ -152,7 +152,7 @@ class ELO:
         k = self.k * hlp.interpolate(task_diff, *DifficultyManager._DIFF_RANGE, 0.0, 1.0)
         dr = k  * (outcome - exp)
         if PRINT_SME:
-            print(f"Match (rank={rat_a:>8.2f}) {outcome:.1f} vs (rank={rat_b:>8.2f}): exp={exp:.2f} k={k:.2f} dr={dr:>10.3f}")
+            print(f"Match (rank={float(rat_a):>8.2f}) {outcome:.1f} vs (rank={float(rat_b):>8.2f}): exp={exp:.2f} k={k:.2f} dr={dr:>10.3f}")
         return dr
     
     def _get_estimate(self, rat_a:float, rat_b:float):
@@ -303,6 +303,7 @@ class RatingSystem:
             if PRINT_LEADERBOARD:
                 leaderboard["curr_ranks"] = curr_ranks
                 leaderboard["new_ranks"] = new_ranks
+                leaderboard["dranks"] = [float(new)-float(old) for new,old in zip(new_ranks,curr_ranks)]
                 print(leaderboard)
  
         return self.rankings
