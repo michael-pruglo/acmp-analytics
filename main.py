@@ -24,10 +24,13 @@ def show_potentials():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
+    #rating_system_evaluator._cache_accuracy_dist_graph()
     rating_system_evaluator.evaluate([
        RatingSystem(TMX_max(), description="tmx max"),
        RatingSystem(TMX_const(), description="tmx const"),
-       RatingSystem(TrueSkill(), ScoringManager(deal_with_ties=False), description="TrueSkill"),
+       RatingSystem(SME_EvE(ELO()), description="elo eve"),
+       RatingSystem(SME_EvE(MOV()), description="elo eve mov"),
+       #RatingSystem(TrueSkill(), ScoringManager(deal_with_ties=False), description="TrueSkill"),
        #RatingSystem(DifficultyManager(), ScoringManager(), SME(), description="sme"),
        #RatingSystem(DifficultyManager(), ScoringManager(), SME(MOV()), description="sme mov"),
        #RatingSystem(DifficultyManager(), ScoringManager(), SME_EvE(ELO(410, 35)), description="sme eve"),
@@ -38,5 +41,4 @@ if __name__ == "__main__":
        #RatingSystem(DifficultyManager(), ScoringManager(), SME_avg2(MOV()), description="sme avg2 mov"),
 
     ],
-    0, 10, tasks=1000)
-
+    0, 20, tasks=1000)

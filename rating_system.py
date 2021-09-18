@@ -156,7 +156,7 @@ class ELO:
         return dr
     
     def _get_estimate(self, rat_a:float, rat_b:float):
-        return 1 / ( 1 + 10**(-(rat_a-rat_b)/self.sigma) )
+        return 1 / ( 1 + 10**(-(float(rat_a)-float(rat_b))/self.sigma) )
 
 #Margin Of Victory:
 # http://www2.stat-athens.aueb.gr/~jbn/conferences/MathSport_presentations/plenary%20talks/P3%20-%20Kovalchik%20-%20Extensions%20of%20the%20Elo%20Rating%20System%20for%20Margin%20of%20Victory.pdf
@@ -169,7 +169,7 @@ class MOV(ELO):
         return score_b - score_a
 
     def _get_estimate(self, rat_a:float, rat_b:float):
-        return (rat_a-rat_b) / self.sigma
+        return (float(rat_a)-float(rat_b)) / self.sigma
 
 
 
