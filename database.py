@@ -1,15 +1,15 @@
-import network
-import pandas as pd
-import pickle, atexit, os
+import network, global_leaderboard
+import pandas as pd, pickle, atexit, os
 
 _LEADERBOARD_CACHE_FILENAME = "dbcache/leaderboards_cache.h5"
 _AC_SUB_CACHE_FILENAME = "dbcache/ac_sub_cache.p"
+_GLOBAL_LEADERBOARD_CACHE_FILENAME = "dbcache/global_leaderboard_cache.h5"
 def _init_leaderboards_cache():
     return pd.HDFStore(_LEADERBOARD_CACHE_FILENAME, complevel=7, complib='zlib')
 
 _leaderboards_cache = _init_leaderboards_cache()
 _ac_sub_cache = {}
-
+_global_leaderboard = pd.read_hdf(_GLOBAL_LEADERBOARD_CACHE_FILENAME, "gl")
 
 
 def prepare_cache(task_info_list):
@@ -36,6 +36,17 @@ def get_accepted_submissions(task_no):
         _update_ac_sub_cache([task_no])
 
     return _ac_sub_cache[task_no]
+
+def construct_global_leaderboard(rat_systems, runs):
+    gl = global_leaderboard.calc(list(range(1,1001)), rat_systems, runs)
+    gl.to_hdf(_GLOBAL_LEADERBOARD_CACHE_FILENAME, "gl", complevel=7, complib='zlib')
+
+def get_global_leaderboard():
+    return _global_leaderboard
+
+def get_global_leaderboard_row(name):
+    return _global_leaderboard.loc[_global_leaderboard["name"] == name]
+
 
 
 def _update_leaderboards_cache(task_info_list):

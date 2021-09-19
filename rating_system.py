@@ -312,7 +312,8 @@ class RatingSystem:
 
     def rate_multiple_runs(self, data_list, runs:int) -> DefaultDict[str, Rating]:
         result_dict = defaultdict(float)
-        for _ in range(runs):
+        for i in range(runs):
+            if i%10==0: print(f"rate_multiple_runs {self.description}: run {i:>4}/{runs:>4}")
             self.reset()
             random.shuffle(data_list)
             for name, rat in self.rate(data_list).items():

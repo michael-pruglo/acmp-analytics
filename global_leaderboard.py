@@ -47,7 +47,7 @@ def _construct_leaderboard(dataframes: List[pd.DataFrame], columns_to_sort_by:Li
 
 
 
-def calc(task_ids: List[int], rat_systems: List[RatingSystem], runs=5) -> pd.DataFrame:
+def calc(task_ids: List[int], rat_systems: List[RatingSystem], runs) -> pd.DataFrame:
     data = _prepare_data(task_ids)
 
     dataframes = []
