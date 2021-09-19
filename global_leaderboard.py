@@ -60,5 +60,4 @@ def calc(task_ids: List[int], rat_systems: List[RatingSystem], runs) -> pd.DataF
     return _construct_leaderboard(dataframes, [r.description for r in rat_systems])
 
 
-#todo: print task leaderboards with rank info
 #todo: add breaking 100 bonus

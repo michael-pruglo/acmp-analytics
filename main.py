@@ -1,3 +1,4 @@
+from numpy import inner
 import pandas as pd
 from rating_system import *
 import rating_system_evaluator, database
@@ -20,6 +21,16 @@ def show_potentials():
     for id, (diff, s) in sorted(dmap.items(), key=lambda x: x[1][0], reverse=True):
         print(f"{id:>4} {diff:>10.2f} {s}")
 
+def show_leaderboard(task_id, lang=Lang.cpp):
+    info = TaskInfo(task_id, lang, database.get_accepted_submissions(task_id))
+    leaderboard = database.get_task_leaderboard(info)
+    if PRINT_DIFF:
+        DifficultyManager().get_task_difficulty(info, leaderboard)
+    if PRINT_LEADERBOARD:
+        gl = database.get_global_leaderboard()
+        leaderboard = leaderboard.merge(gl, on="name")
+        print(leaderboard)
+
 def evaluate():
     rating_system_evaluator.evaluate([
        #RatingSystem(TMX_max(), description="tmx max"),
@@ -37,13 +48,14 @@ def print_global_leaderboard():
     #     ],
     #     runs = 100
     # )
-    print(database.get_global_leaderboard().head(50))
+    gl = database.get_global_leaderboard()#.sort_values("       Elo", ascending=False)
+    print(gl.head(50))
     print("\n\n\n\n")
     print(database.get_global_leaderboard_row("Пругло Михаил"))
 
 
-
+ 
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
-    print_global_leaderboard()
+    show_leaderboard(267)
