@@ -2,11 +2,11 @@ import pandas as pd
 from rating_system import *
 import rating_system_evaluator, database, global_leaderboard
 
-def fetch_all(lang):
+def fetch_all(lang=Lang.cpp):
     database.fetch([TaskInfo(id, lang) for id in range(1, 1001)])
 
 def prepare_local_cache():
-    fetch_all(Lang.cpp)
+    fetch_all()
     rating_system_evaluator._cache_accuracy_dist_graph(1000000)
 
 def show_potentials():
@@ -32,12 +32,12 @@ def evaluate():
 
 def print_global_leaderboard():
     gl = global_leaderboard.calc(
-        task_ids = list(range(7,100)),
+        task_ids = list(range(1,1001)),
         rat_systems = [
             RatingSystem(TMX_const(), description="Skill points"),
             RatingSystem(SME_EvE(MOV()), description="       Elo"),
         ],
-        runs = 5
+        runs = 10
     )
     print(gl.head(50))
 
@@ -47,4 +47,5 @@ def print_global_leaderboard():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
+    fetch_all()
     print_global_leaderboard()
