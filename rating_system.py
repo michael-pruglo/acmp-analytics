@@ -1,4 +1,4 @@
-import numpy as np, pandas as pd, statistics, matplotlib.pyplot as plt, trueskill
+import numpy as np, pandas as pd, statistics, matplotlib.pyplot as plt, trueskill, random
 from functools import partial
 from collections import defaultdict
 from math import isclose, sqrt
@@ -193,17 +193,19 @@ class TMX_max(RatingSystemLogic):
         self.distrib_f_k = distrib_f_k
 
     def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
-        max_pts = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
-        return [ curr_r + self._distrib_f(max_pts, x) for curr_r, x in zip(curr_ranks, leaderboard["scores"]) ]
+        task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
+        return [ curr_r + dr for curr_r, dr in zip(curr_ranks, self._calc_rank_deltas(task_diff, leaderboard))]
+
+    def _calc_rank_deltas(self, task_diff, leaderboard):
+        return [self._distrib_f(task_diff, x) for x in leaderboard["scores"]]
 
     def _distrib_f(self, max_score, x):
         return max_score*(1 - self.distrib_f_k*np.log(x))
 #task diff determines prize pool for all 20
 class TMX_const(TMX_max):
-    def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard: pd.DataFrame) -> List[Rating]:
-        prize_pool = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
-        first = super()._calc_updated_ranks_impl(curr_ranks, task_info, leaderboard)
-        return [ curr_r + (float(x)-float(curr_r))*prize_pool/sum(first) for curr_r, x in zip(curr_ranks, first)]
+    def _calc_rank_deltas(self, task_diff, leaderboard):
+        first = super()._calc_rank_deltas(task_diff, leaderboard)
+        return [float(x) * task_diff / sum(first) for x in first]
 
 
 #Simple Multiplayer ELO: http://www.tckerrigan.com/Misc/Multiplayer_Elo/
@@ -307,6 +309,15 @@ class RatingSystem:
                 print(leaderboard)
  
         return self.rankings
+
+    def rate_multiple_runs(self, data_list, runs:int) -> DefaultDict[str, Rating]:
+        result_dict = defaultdict(float)
+        for _ in range(runs):
+            self.reset()
+            random.shuffle(data_list)
+            for name, rat in self.rate(data_list).items():
+                result_dict[name] += float(rat) / runs
+        return result_dict
 
     def eval_accuracy(self, data_list) -> float:
         return statistics.mean([self._eval_accuracy_task(task_info, leaderboard) for task_info, leaderboard in data_list])

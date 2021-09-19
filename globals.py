@@ -14,6 +14,6 @@ class TaskInfo(NamedTuple):
 
 
 # settings
-PRINT_DIFF          = True
-PRINT_LEADERBOARD   = True
+PRINT_DIFF          = False
+PRINT_LEADERBOARD   = False
 PRINT_SME           = False

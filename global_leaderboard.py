@@ -52,7 +52,7 @@ def calc(task_ids: List[int], rat_systems: List[RatingSystem]) -> pd.DataFrame:
 
     dataframes = []
     for rat_sys in rat_systems:
-        rating_dict = rat_sys.rate(data)
+        rating_dict = rat_sys.rate_multiple_runs(data, 5)
         #todo: add multiple rounds with shuffled data
         dataframes.append(pd.DataFrame.from_dict(rating_dict, orient='index', columns=[rat_sys.description], dtype=float))
     
