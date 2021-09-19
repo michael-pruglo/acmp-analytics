@@ -47,13 +47,12 @@ def _construct_leaderboard(dataframes: List[pd.DataFrame], columns_to_sort_by:Li
 
 
 
-def calc(task_ids: List[int], rat_systems: List[RatingSystem]) -> pd.DataFrame:
+def calc(task_ids: List[int], rat_systems: List[RatingSystem], runs=5) -> pd.DataFrame:
     data = _prepare_data(task_ids)
 
     dataframes = []
     for rat_sys in rat_systems:
-        rating_dict = rat_sys.rate_multiple_runs(data, 5)
-        #todo: add multiple rounds with shuffled data
+        rating_dict = rat_sys.rate_multiple_runs(data, runs)
         dataframes.append(pd.DataFrame.from_dict(rating_dict, orient='index', columns=[rat_sys.description], dtype=float))
     
     dataframes.append(Statistics.collect(data))

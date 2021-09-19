@@ -31,13 +31,15 @@ def evaluate():
     0, 1, tasks=30)
 
 def print_global_leaderboard():
-    print(global_leaderboard.calc(
+    gl = global_leaderboard.calc(
         task_ids = list(range(7,100)),
         rat_systems = [
             RatingSystem(TMX_const(), description="Skill points"),
-            #RatingSystem(SME_EvE(MOV()), description="       Elo"),
-        ]
-    ))
+            RatingSystem(SME_EvE(MOV()), description="       Elo"),
+        ],
+        runs = 5
+    )
+    print(gl.head(50))
 
 
 
