@@ -24,12 +24,10 @@ def show_potentials():
 def show_leaderboard(task_id, lang=Lang.cpp):
     info = TaskInfo(task_id, lang, database.get_accepted_submissions(task_id))
     leaderboard = database.get_task_leaderboard(info)
-    if PRINT_DIFF:
-        DifficultyManager().get_task_difficulty(info, leaderboard)
-    if PRINT_LEADERBOARD:
-        gl = database.get_global_leaderboard()
-        leaderboard = leaderboard.merge(gl, on="name")
-        print(leaderboard)
+    DifficultyManager().get_task_difficulty(info, leaderboard, verbose=True)
+    gl = database.get_global_leaderboard()
+    leaderboard = leaderboard.merge(gl, on="name")
+    print(leaderboard)
 
 def evaluate():
     rating_system_evaluator.evaluate([
@@ -41,21 +39,26 @@ def evaluate():
     ],
     0, 1, tasks=30)
 
-def print_global_leaderboard():
-    # database.construct_global_leaderboard(rat_systems = [
-    #         RatingSystem(TMX_const(), description="Skill points"),
-    #         RatingSystem(SME_EvE(MOV()), description="       Elo"),
-    #     ],
-    #     runs = 100
-    # )
+def print_global_leaderboard(recalc:bool=False):
+    if recalc:
+        database.construct_global_leaderboard(rat_systems = [
+                RatingSystem(SME_EvE(MOV()), description="       Elo"),
+                RatingSystem(TMX_const(), description="Skill points"),
+            ],
+            runs = 100
+        )
     gl = database.get_global_leaderboard()#.sort_values("       Elo", ascending=False)
     print(gl.head(50))
     print("\n\n\n\n")
     print(database.get_global_leaderboard_row("Пругло Михаил"))
 
+def update():
+    fetch_all()
+    print_global_leaderboard(recalc=True)
 
  
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
+    #update()
     show_leaderboard(267)

@@ -79,7 +79,7 @@ class DifficultyManager:
         self.PS_A = PS_A
         self.combiner = combiner
 
-    def get_task_difficulty(self, task_info:TaskInfo, leaderboard:pd.DataFrame):
+    def get_task_difficulty(self, task_info:TaskInfo, leaderboard:pd.DataFrame, verbose:bool=False):
         acc_sub_score = self._get_acc_sub_score(task_info.accepted_submissions)
         code_len_score = self._get_code_len_score(leaderboard["code_len"])
 
@@ -88,7 +88,7 @@ class DifficultyManager:
             ( self.LEN_C,   code_len_score ),
         ])
 
-        if PRINT_DIFF:
+        if PRINT_DIFF or verbose==True:
             _a = task_info.accepted_submissions
             _b = leaderboard["code_len"].median()
             print(f"Task #{task_info.id} difficulty:")

@@ -9,7 +9,6 @@ def _init_leaderboards_cache():
 
 _leaderboards_cache = _init_leaderboards_cache()
 _ac_sub_cache = {}
-_global_leaderboard = pd.read_hdf(_GLOBAL_LEADERBOARD_CACHE_FILENAME, "gl")
 
 
 def prepare_cache(task_info_list):
@@ -42,9 +41,11 @@ def construct_global_leaderboard(rat_systems, runs):
     gl.to_hdf(_GLOBAL_LEADERBOARD_CACHE_FILENAME, "gl", complevel=7, complib='zlib')
 
 def get_global_leaderboard():
+    _global_leaderboard = pd.read_hdf(_GLOBAL_LEADERBOARD_CACHE_FILENAME, "gl")
     return _global_leaderboard
 
 def get_global_leaderboard_row(name):
+    _global_leaderboard = pd.read_hdf(_GLOBAL_LEADERBOARD_CACHE_FILENAME, "gl")
     return _global_leaderboard.loc[_global_leaderboard["name"] == name]
 
 
