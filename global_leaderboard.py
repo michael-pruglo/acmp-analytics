@@ -1,4 +1,4 @@
-from rating_system import RatingSystem
+from rating_system import RatingSystem, ScoringManager
 import pandas as pd
 from dataclasses import dataclass
 from collections import defaultdict
@@ -16,16 +16,18 @@ class Statistics:
         avg_rating: float = 0.0
         def add_ranked_task(self, rank):
             self.tasks += 1
+            self.avg_rating = (self.avg_rating*(self.tasks-1) + rank) / self.tasks
+            rank = int(rank + 0.5)
             if rank == 1: self.gold += 1
             if rank == 2: self.silver += 1
             if rank == 3: self.bronze += 1
-            self.avg_rating = (self.avg_rating*(self.tasks-1) + rank) / self.tasks
 
     def collect(data) -> pd.DataFrame:
         stats = defaultdict(Statistics.SRow)
         for _, leaderboard in data:
-            for _, row in leaderboard.iterrows():
-                stats[row["name"]].add_ranked_task(row["rank"])
+            interp_ranks = ScoringManager().get_scores(leaderboard)
+            for name, rank in zip(leaderboard["name"], interp_ranks):
+                stats[name].add_ranked_task(rank)
         return pd.DataFrame.from_dict(stats, orient='index', columns=["tasks", "gold", "silver", "bronze", "avg_rating"])
 
 def _prepare_data(task_ids: List[int]):
