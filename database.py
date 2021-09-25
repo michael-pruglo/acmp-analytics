@@ -1,3 +1,4 @@
+from globals import TaskInfo
 import network, global_leaderboard
 import pandas as pd, pickle, atexit, os
 
@@ -15,7 +16,7 @@ def prepare_cache(task_info_list):
     _update_leaderboards_cache(task_info_list)
     _update_ac_sub_cache([t.id for t in task_info_list])
 
-def fetch(task_info_list):
+def fetch(task_info_list) -> None:
     global _leaderboards_cache
     _leaderboards_cache.close()
     os.remove(_LEADERBOARD_CACHE_FILENAME)
@@ -23,7 +24,13 @@ def fetch(task_info_list):
     _ac_sub_cache.clear()
     prepare_cache(task_info_list)
 
-def get_task_leaderboard(task_info):
+def update_one_task(task_info:TaskInfo) -> None:
+    del _leaderboards_cache[str(task_info)]
+    del _ac_sub_cache[task_info.id]
+    get_task_leaderboard(task_info)
+    get_accepted_submissions(task_info.id)
+
+def get_task_leaderboard(task_info:TaskInfo):
     key = str(task_info)
     if key not in _leaderboards_cache:
         _leaderboards_cache[key] = network.get_task_leaderboard(task_info)

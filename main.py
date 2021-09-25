@@ -77,6 +77,7 @@ def update():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
+    #database.update_one_task(TaskInfo(41, Lang.cpp))
     #update()
     #show_global_leaderboard(recalc=True)
     #show_potentials()
