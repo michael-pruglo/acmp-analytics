@@ -1,7 +1,8 @@
-from numpy import inner
 import pandas as pd
-from rating_system import *
 import rating_system_evaluator, database
+from rating_system import *
+from elo import *
+from skill_points import *
 
 def fetch_all(lang=Lang.cpp):
     database.fetch([TaskInfo(id, lang) for id in range(1, 1001)])
@@ -39,7 +40,7 @@ def evaluate():
     ],
     0, 1, tasks=30)
 
-def print_global_leaderboard(recalc:bool=False):
+def show_global_leaderboard(recalc:bool=False):
     if recalc:
         database.construct_global_leaderboard(rat_systems = [
                 RatingSystem(SME_EvE(MOV()), description="       Elo"),
@@ -54,12 +55,12 @@ def print_global_leaderboard(recalc:bool=False):
 
 def update():
     fetch_all()
-    print_global_leaderboard(recalc=True)
+    show_global_leaderboard(recalc=True)
 
  
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
-    #update()
-    show_potentials()
-    show_leaderboard(943)
+    update()
+    #show_potentials()
+    show_leaderboard(345)
