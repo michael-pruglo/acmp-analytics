@@ -57,7 +57,7 @@ def evaluate():
     0, 1, tasks=30)
 
 def show_global_leaderboard(recalc:bool=False):
-    if recalc:
+    if recalc==True:
         database.construct_global_leaderboard(rat_systems = [
                 RatingSystem(SME_EvE(MOV()), description="       Elo"),
                 RatingSystem(TMX_const(), description="Skill points"),
@@ -67,7 +67,13 @@ def show_global_leaderboard(recalc:bool=False):
     gl = database.get_global_leaderboard()#.sort_values("       Elo", ascending=False)
     print(gl.head(50))
     print("\n\n\n\n")
-    print(database.get_global_leaderboard_row("Пругло Михаил"))
+    #print(database.get_global_leaderboard_row("Пругло Михаил"))
+
+    plt.clf()
+    main_col = "       Elo"
+    assert(main_col in gl)
+    plt.hist(gl[main_col], 100, density=True)
+    plt.show()
 
 def update():
     fetch_all()
@@ -77,8 +83,10 @@ def update():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
-    #database.update_one_task(TaskInfo(41, Lang.cpp))
+    database.update_one_task(TaskInfo(576, Lang.cpp))
     #update()
-    #show_global_leaderboard(recalc=True)
+    #WARNING show_global_leaderboard(recalc=True)
+
+    #show_global_leaderboard()
+    show_leaderboard(576)
     #show_potentials()
-    show_leaderboard(41)

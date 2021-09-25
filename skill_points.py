@@ -13,7 +13,7 @@ class TMX_max(RatingSystemLogic):
         self.distrib_f_k = distrib_f_k
 
     def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
-        deltas = self._calc_rank_deltas()
+        deltas = self._calc_rank_deltas(task_info, leaderboard)
         return [ curr_r + dr for curr_r, dr in zip(curr_ranks, deltas)]
 
     def _calc_rank_deltas(self, task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[float]:
