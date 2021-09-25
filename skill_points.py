@@ -12,19 +12,28 @@ class TMX_max(RatingSystemLogic):
         self.diff_mgr = difficulty_mgr
         self.distrib_f_k = distrib_f_k
 
-    def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
-        task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
-        deltas = self._calc_rank_deltas(task_diff, leaderboard)
-        deltas = self._apply_breaking_100_bonus(deltas, leaderboard["code_len"])
-        return [ curr_r + dr for curr_r, dr in zip(curr_ranks, deltas)]
-        
-    def _calc_rank_deltas(self, task_diff, leaderboard):
-        return [self._distrib_f(task_diff, x) for x in leaderboard["scores"]]
+    def plot_task(self, task_info: TaskInfo, leaderboard:pd.DataFrame) -> None:
+        pass
 
-    def _distrib_f(self, max_score, x):
+
+    def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
+        deltas = self._calc_rank_deltas()
+        return [ curr_r + dr for curr_r, dr in zip(curr_ranks, deltas)]
+
+    def _calc_rank_deltas(self, task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[float]:
+        task_diff = self.diff_mgr.get_task_difficulty(task_info, leaderboard)
+        scores = leaderboard["scores"]
+        deltas = self._distribute_points(task_diff, scores)
+        deltas = self._apply_breaking_100_bonus(deltas, leaderboard["code_len"])
+        return deltas
+        
+    def _distribute_points(self, task_diff:float, scores:List[float]) -> List[float]:
+        return [self._distrib_f(task_diff, x) for x in scores]
+
+    def _distrib_f(self, max_score:float, x:float) -> float:
         return max_score*(1 - self.distrib_f_k*np.log(x))
 
-    def _apply_breaking_100_bonus(self, deltas, codelengths):
+    def _apply_breaking_100_bonus(self, deltas:List[float], codelengths:List[int]):
         if codelengths.median() >= 100 and codelengths[0] < 100:
             if PRINT_LEADERBOARD:
                 print("Breaking 100 applies!\nprev:  ", hlp.pretty(deltas,2))
@@ -38,6 +47,7 @@ class TMX_max(RatingSystemLogic):
 
 #task diff determines prize pool for all 20
 class TMX_const(TMX_max):
-    def _calc_rank_deltas(self, task_diff, leaderboard):
-        first = super()._calc_rank_deltas(task_diff, leaderboard)
-        return [float(x) * task_diff / sum(first) for x in first]
+    def _distribute_points(self, task_diff:float, scores:List[float]) -> List[float]:
+        first = super()._distribute_points(task_diff, scores)
+        interp_k = task_diff / sum(first)
+        return [float(x) * interp_k for x in first]
