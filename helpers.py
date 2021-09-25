@@ -16,8 +16,10 @@ def interpolate_inverse(x:float, min_orig:float, max_orig:float, min_target:floa
 
 def plot(x_list, f) -> None:
     x_axis = np.linspace(min(x_list)*.9, max(x_list)*1.1)
-    plt.plot(x_list, [f(x) for x in x_list], 'ro',
-             x_axis, [f(x) for x in x_axis])
+    plt.plot(
+        x_axis, [f(x) for x in x_axis],
+        x_list, [f(x) for x in x_list], 'yo',
+    )
 
 def is_in_range(x, min, max) -> bool:
     return min < x < max or isclose(x, min) or isclose(x, max)

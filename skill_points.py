@@ -12,10 +12,6 @@ class TMX_max(RatingSystemLogic):
         self.diff_mgr = difficulty_mgr
         self.distrib_f_k = distrib_f_k
 
-    def plot_task(self, task_info: TaskInfo, leaderboard:pd.DataFrame) -> None:
-        pass
-
-
     def _calc_updated_ranks_impl(self, curr_ranks: List[Rating], task_info: TaskInfo, leaderboard:pd.DataFrame) -> List[Rating]:
         deltas = self._calc_rank_deltas()
         return [ curr_r + dr for curr_r, dr in zip(curr_ranks, deltas)]

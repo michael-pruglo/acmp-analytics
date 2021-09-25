@@ -1,4 +1,4 @@
-import pandas as pd
+import pandas as pd, matplotlib.pyplot as plt
 import rating_system_evaluator, database
 from rating_system import *
 from elo import *
@@ -25,10 +25,26 @@ def show_potentials(n=100):
 def show_leaderboard(task_id, lang=Lang.cpp):
     info = TaskInfo(task_id, lang, database.get_accepted_submissions(task_id))
     leaderboard = database.get_task_leaderboard(info)
-    DifficultyManager().get_task_difficulty(info, leaderboard, verbose=True)
+    scores = leaderboard["scores"] = ScoringManager().get_scores(leaderboard)
+    diff = DifficultyManager().get_task_difficulty(info, leaderboard, verbose=True)
+    pts = leaderboard["skill_pts"] = TMX_const()._calc_rank_deltas(info, leaderboard)
     gl = database.get_global_leaderboard()
     leaderboard = leaderboard.merge(gl, on="name")
     print(leaderboard)
+    
+    plt.clf()
+    plt.title(f"Task #{task_id}")
+    plt.xlabel("score")
+    plt.xticks(range(1,21))
+    plt.ylabel("skill points")
+    plt.yticks( range(1, int(max(pts)+1)+1) )
+    plt.grid(alpha=0.5, linestyle='dashed')
+    plt.plot(scores, pts, 'ro')
+    for i, name in enumerate(leaderboard["name"]):
+        plt.annotate(f"{name}: {pts[i]:.2f}", (scores[i],pts[i]), xytext=(scores[i]+1.4,pts[i]+.1), arrowprops={'arrowstyle':'->'})
+    interp_k = diff / sum(TMX_max()._distribute_points(diff, scores))
+    hlp.plot(scores, lambda x: TMX_max()._distrib_f(diff, x)*interp_k )
+    plt.show()
 
 def evaluate():
     rating_system_evaluator.evaluate([
@@ -61,6 +77,7 @@ def update():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
-    update()
+    #update()
+    #show_global_leaderboard(recalc=True)
     #show_potentials()
-    show_leaderboard(345)
+    show_leaderboard(41)
