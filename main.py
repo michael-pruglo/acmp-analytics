@@ -22,7 +22,9 @@ def show_potentials(n=100):
     for id, (diff, s) in sorted(dmap.items(), key=lambda x: x[1][0], reverse=True)[:n]:
         print(f"{id:>4} {diff:>10.2f} {s}")
 
-def show_leaderboard(task_id, lang=Lang.cpp):
+def show_leaderboard(task_id, lang=Lang.cpp, reload:bool=False):
+    if reload==True:
+        database.update_one_task(TaskInfo(task_id, lang))
     info = TaskInfo(task_id, lang, database.get_accepted_submissions(task_id))
     leaderboard = database.get_task_leaderboard(info)
     scores = leaderboard["scores"] = ScoringManager().get_scores(leaderboard)
@@ -87,10 +89,9 @@ def update():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
-    #database.update_one_task(TaskInfo(292, Lang.cpp))
     #update()
     #WARNING show_global_leaderboard(recalc=True)
 
-    show_global_leaderboard()
-    show_leaderboard(292)
-    #show_potentials(300)
+    #show_global_leaderboard()
+    show_leaderboard(580, reload=False)
+    #show_potentials(200)
