@@ -29,6 +29,7 @@ def show_leaderboard(task_id, lang=Lang.cpp):
     diff = DifficultyManager().get_task_difficulty(info, leaderboard, verbose=True)
     pts = leaderboard["skill_pts"] = TMX_const()._calc_rank_deltas(info, leaderboard)
     gl = database.get_global_leaderboard()
+    gl["glob rank"] = gl.index
     leaderboard = leaderboard.merge(gl, on="name")
     print(leaderboard)
     
@@ -83,10 +84,10 @@ def update():
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
-    database.update_one_task(TaskInfo(576, Lang.cpp))
+    #database.update_one_task(TaskInfo(292, Lang.cpp))
     #update()
     #WARNING show_global_leaderboard(recalc=True)
 
-    #show_global_leaderboard()
-    show_leaderboard(576)
-    #show_potentials()
+    show_global_leaderboard()
+    show_leaderboard(292)
+    #show_potentials(300)
