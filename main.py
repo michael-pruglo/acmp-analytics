@@ -27,9 +27,9 @@ def show_leaderboard(task_id, lang=Lang.cpp):
     leaderboard = database.get_task_leaderboard(info)
     scores = leaderboard["scores"] = ScoringManager().get_scores(leaderboard)
     diff = DifficultyManager().get_task_difficulty(info, leaderboard, verbose=True)
-    pts = leaderboard["skill_pts"] = TMX_const()._calc_rank_deltas(info, leaderboard)
+    pts = leaderboard["pts_earned"] = TMX_const()._calc_rank_deltas(info, leaderboard)
     gl = database.get_global_leaderboard()
-    gl["glob rank"] = gl.index
+    gl.insert(0, "player's global rank", gl.index)
     leaderboard = leaderboard.merge(gl, on="name")
     print(leaderboard)
     
