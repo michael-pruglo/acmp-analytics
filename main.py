@@ -71,9 +71,12 @@ def show_global_leaderboard(recalc:bool=False):
     #print(database.get_global_leaderboard_row("Пругло Михаил"))
 
     plt.clf()
+    plot_threshold = 1550
     main_col = "       Elo"
     assert(main_col in gl)
-    plt.hist(gl[main_col], 100, density=True)
+    plot_data = [g for g in gl[main_col] if g>plot_threshold]
+    plt.title(f"PDF for players with elo>{plot_threshold}\n({len(plot_data)} of them)")
+    plt.hist(plot_data, 100, density=True)
     plt.show()
 
 def update():
