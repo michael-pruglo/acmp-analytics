@@ -25,8 +25,10 @@ def fetch(task_info_list) -> None:
     prepare_cache(task_info_list)
 
 def update_one_task(task_info:TaskInfo) -> None:
-    del _leaderboards_cache[str(task_info)]
-    del _ac_sub_cache[task_info.id]
+    if str(task_info) in _leaderboards_cache:
+        del _leaderboards_cache[str(task_info)]
+    if task_info.id in _ac_sub_cache:
+        del _ac_sub_cache[task_info.id]
     get_task_leaderboard(task_info)
     get_accepted_submissions(task_info.id)
 

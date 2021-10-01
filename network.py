@@ -31,7 +31,7 @@ def get_accepted_submissions(pages):
 
 def _download_table(url, column_names):
     def download():
-        html = requests.get(url).content
+        html = requests.get(url).content #can add verify=False if problems
         df_list = pd.read_html(html, attrs={'class':'main'}, parse_dates=True)
         assert(len(df_list)==1)
         return df_list[0]
