@@ -85,6 +85,18 @@ def update():
     fetch_all()
     show_global_leaderboard(recalc=True)
 
+def show_worst(n=30):
+    rmap = {}
+    for id in range(1, 1001):
+        info = TaskInfo(id, Lang.cpp, database.get_accepted_submissions(id))
+        leaderboard = database.get_task_leaderboard(info)
+        if "Пругло Михаил" in list(leaderboard["name"]):
+            scores = ScoringManager().get_scores(leaderboard)
+            rank = leaderboard[leaderboard["name"]=="Пругло Михаил"].index[0]
+            rmap[id] = scores[rank]
+    for id, rat in sorted(rmap.items(), key=lambda item: item[1], reverse=True)[:n]:
+        print(f"{id:>4} {rat:.2f}")
+
  
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
@@ -93,5 +105,6 @@ if __name__ == "__main__":
     #WARNING show_global_leaderboard(recalc=True)
 
     #show_global_leaderboard()
-    show_leaderboard(580, reload=False)
+    show_leaderboard(513, reload=False)
     #show_potentials(200)
+    #show_worst()
