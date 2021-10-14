@@ -95,7 +95,8 @@ def show_worst(n=30):
             rank = leaderboard[leaderboard["name"]=="Пругло Михаил"].index[0]
             rmap[id] = scores[rank]
     for id, rat in sorted(rmap.items(), key=lambda item: item[1], reverse=True)[:n]:
-        print(f"{id:>4} {rat:.2f}")
+        comment = "cheats" if id in [86, 195, 554, 756, 903] else ""
+        print(f"{id:>4} {rat:.2f} {comment}")
 
  
 if __name__ == "__main__":
@@ -105,6 +106,6 @@ if __name__ == "__main__":
     #WARNING show_global_leaderboard(recalc=True)
 
     #show_global_leaderboard()
-    show_leaderboard(513, reload=False)
+    #show_leaderboard(373, reload=True)
     #show_potentials(200)
-    #show_worst()
+    show_worst()
