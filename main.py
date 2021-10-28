@@ -16,7 +16,7 @@ def show_potentials(n=100):
     for id in range(1, 1001):
         info = TaskInfo(id, Lang.cpp, database.get_accepted_submissions(id))
         leaderboard = database.get_task_leaderboard(info)
-        sol = "+" if "Хворых Павел" in list(leaderboard["name"]) else "unsolved"
+        sol = "+" if "Пругло Михаил" in list(leaderboard["name"]) else "unsolved"
         diff = DifficultyManager().get_task_difficulty(info, leaderboard, (0,0))
         dmap[id] = (diff, sol)
     for id, (diff, s) in sorted(dmap.items(), key=lambda x: x[1][0], reverse=True)[:n]:
@@ -110,18 +110,20 @@ def show_worst(n=30):
             rank = leaderboard[leaderboard["name"]=="Пругло Михаил"].index[0]
             rmap[id] = scores[rank]
     for id, rat in sorted(rmap.items(), key=lambda item: item[1], reverse=True)[:n]:
-        comment = "cheats" if id in [79, 86, 195, 513, 554, 756, 903] else ""
+        comment = ""
+        if id in [40, 79, 86, 108, 195, 513, 554, 756, 903]: comment = "cheats"
+        if id in [518, 115, 976]: comment = "long"
         print(f"{id:>4} {rat:.2f} {comment}")
 
  
 if __name__ == "__main__":
     pd.options.display.float_format = "{:.2f}".format
 
-    update()
+    #update()
     #WARNING show_global_leaderboard(recalc=True)
 
     #show_global_leaderboard()
-    #show_leaderboard(678, reload=True)
+    #show_leaderboard(40, reload=True)
     #show_potentials(400)
-    #show_worst()
-    show_rivalry("Пругло Михаил", "Хворых Павел")
+    show_worst()
+    #show_rivalry("Пругло Михаил", "Хворых Павел")
