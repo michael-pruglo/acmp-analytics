@@ -100,7 +100,7 @@ def update():
     fetch_all()
     show_global_leaderboard(recalc=True)
 
-def show_worst(n=30):
+def show_worst(n=300):
     rmap = {}
     for id in range(1, 1001):
         info = TaskInfo(id, Lang.cpp, database.get_accepted_submissions(id))
@@ -108,11 +108,13 @@ def show_worst(n=30):
         if "Пругло Михаил" in list(leaderboard["name"]):
             scores = ScoringManager().get_scores(leaderboard)
             rank = leaderboard[leaderboard["name"]=="Пругло Михаил"].index[0]
-            rmap[id] = scores[rank]
+            rmap[id] = scores[rank] if rank>0 else scores[0]-scores[1]
     for id, rat in sorted(rmap.items(), key=lambda item: item[1], reverse=True)[:n]:
         comment = ""
-        if id in [40, 79, 86, 108, 195, 513, 554, 756, 903]: comment = "cheats"
-        if id in [518, 115, 976]: comment = "long"
+        if id in [40, 79, 86, 108, 195, 513, 539, 554, 756, 903]: comment = "cheats"
+        if id in [335, 115, 368, 976]: comment = "long"
+        if id in [3, 8, 15, 59, 92, 312, 462, 606, 697, 766, 777, 778, 794, 839, 907, 929, 942, 943, 948, 970]: comment = "tie best, seems to be optimized"
+        if id in [7, 499, 548]: comment = ":("
         print(f"{id:>4} {rat:.2f} {comment}")
 
  
@@ -123,7 +125,7 @@ if __name__ == "__main__":
     #WARNING show_global_leaderboard(recalc=True)
 
     #show_global_leaderboard()
-    #show_leaderboard(40, reload=True)
+    show_leaderboard(263, reload=True)
     #show_potentials(400)
     show_worst()
     #show_rivalry("Пругло Михаил", "Хворых Павел")
